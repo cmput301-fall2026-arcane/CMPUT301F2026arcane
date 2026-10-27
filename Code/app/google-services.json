@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "365138870042",
+    "project_id": "arcane-campsite-app",
+    "storage_bucket": "arcane-campsite-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:365138870042:android:b6628ee3cca844442836a3",
+        "android_client_info": {
+          "package_name": "com.example.code"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBh-x6Eq9nPlRzWsYrbqAsSieZ9-ozM6ho"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
