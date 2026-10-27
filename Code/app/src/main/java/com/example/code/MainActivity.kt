@@ -1,4 +1,4 @@
-package com.example.code
+package com.example.arcane
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -11,7 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.code.ui.theme.CodeTheme
+import com.example.arcane.ui.theme.ArcaneTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -19,7 +19,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             CodeTheme {
-
+                ArcaneApp()
             }
         }
     }
