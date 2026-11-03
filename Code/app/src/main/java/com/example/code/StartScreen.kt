@@ -1,8 +1,5 @@
 package com.example.arcane
 
-import android.R.attr.font
-import android.R.attr.label
-import android.R.attr.text
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -15,9 +12,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SecureTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -30,14 +30,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.arcane.ui.theme.ArcaneTheme
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.seconds
 
@@ -48,7 +47,6 @@ fun StartScreens(mainNav: NavController) {
     NavHost(navController = localNavCon, startDestination = "title") {
         composable("title") { TitleScreen(localNavCon) }
         composable("login") { LoginScreen(mainNav, localNavCon) }
-        composable("signup") { SignUpScreen(mainNav, localNavCon) }
     }
 }
 
@@ -102,11 +100,15 @@ fun TitleScreen(localNav: NavController) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(mainNav: NavController, localNav: NavController) {
     var user by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var shownPassword by remember { mutableStateOf("") }
+    var showSignUp by remember { mutableStateOf(false) }
+
+    val sheetState = rememberModalBottomSheetState( skipPartiallyExpanded = true )
 
     Column (
         modifier = Modifier.fillMaxSize().padding(55.dp),
@@ -130,16 +132,29 @@ fun LoginScreen(mainNav: NavController, localNav: NavController) {
             value = user,
             onValueChange = { user = it },
             label = { Text("Username / Email") },
+            colors = TextFieldDefaults.colors(
+                unfocusedContainerColor = col.UnfocusedInputContainer,
+                focusedContainerColor = col.FocusedInputContainer,
+                focusedLabelColor = col.FocusedInputLabel,
+                ),
             modifier = Modifier.fillMaxWidth().padding(bottom=10.dp)
         )
         OutlinedTextField(
             value = shownPassword,
             onValueChange = { password = it; shownPassword = "*".repeat(password.length) },
             label = { Text("Password") },
+            colors = TextFieldDefaults.colors(
+                unfocusedContainerColor = col.UnfocusedInputContainer,
+                focusedContainerColor = col.FocusedInputContainer,
+                focusedLabelColor = col.FocusedInputLabel,
+                ),
             modifier = Modifier.fillMaxWidth().padding(bottom=10.dp)
         )
         Button (
             onClick = { },
+            colors = ButtonDefaults.buttonColors(
+                containerColor = col.SubmitButton
+            ),
             modifier = Modifier.fillMaxWidth().padding(horizontal=50.dp)
         ) {
             Text(
@@ -147,9 +162,7 @@ fun LoginScreen(mainNav: NavController, localNav: NavController) {
             )
         }
         Spacer(modifier = Modifier.height(150.dp))
-        Row (
-
-        ) {
+        Row {
             Text(
                 text = "Don't have an account? ",
                 color = Color.White
@@ -157,23 +170,108 @@ fun LoginScreen(mainNav: NavController, localNav: NavController) {
             Text(
                 text = "Sign Up",
                 color = Color.Cyan,
-                modifier = Modifier.clickable{ localNav.navigate("signup") }
+                modifier = Modifier.clickable{ showSignUp = true }
             )
+        }
+    }
+    if (showSignUp) {
+        ModalBottomSheet(
+            onDismissRequest = { showSignUp = false },
+            containerColor = col.BottomSheetBackground,
+            sheetState = sheetState,
+            modifier = Modifier.padding(horizontal = 10.dp).padding(top = 80.dp)
+        ) {
+            SignUpScreen(mainNav)
         }
     }
 }
 
 @Composable
-fun SignUpScreen(mainNav: NavController, localNav: NavController) {
+fun SignUpScreen(mainNav: NavController) {
+    var username by remember { mutableStateOf("") }
+    var newPassword by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var phoneNumber by remember { mutableStateOf("") }
 
-}
 
-@Preview(showBackground = true)
-@Composable
-fun Preview() {
-
-    val navController = rememberNavController()
-    ArcaneTheme {
-        LoginScreen(navController, navController)
+    Column (
+        modifier = Modifier.fillMaxSize().padding(horizontal = 55.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "Create your account",
+            fontWeight = FontWeight(10),
+            color = Color.Black
+        )
+        Spacer(modifier = Modifier.height(25.dp))
+        Spacer(modifier = Modifier.height(100.dp)) // |aN: placeholder space for an upload profile photo circle
+        Spacer(modifier = Modifier.height(25.dp))
+        OutlinedTextField(
+            value = username,
+            onValueChange = { username = it },
+            label = { Text("Username") },
+            colors = TextFieldDefaults.colors(
+                unfocusedContainerColor = col.UnfocusedInputContainer,
+                focusedContainerColor = col.FocusedInputContainer,
+                focusedLabelColor = col.FocusedInputLabel,
+            ),
+            modifier = Modifier.fillMaxWidth().padding(bottom=15.dp)
+        )
+        OutlinedTextField(
+            value = newPassword,
+            onValueChange = { newPassword = it },
+            label = { Text("New Password") },
+            colors = TextFieldDefaults.colors(
+                unfocusedContainerColor = col.UnfocusedInputContainer,
+                focusedContainerColor = col.FocusedInputContainer,
+                focusedLabelColor = col.FocusedInputLabel,
+            ),
+            modifier = Modifier.fillMaxWidth().padding(bottom=15.dp)
+        )
+        OutlinedTextField(
+            value = confirmPassword,
+            onValueChange = { confirmPassword = it },
+            label = { Text("Confirm Password") },
+            colors = TextFieldDefaults.colors(
+                unfocusedContainerColor = col.UnfocusedInputContainer,
+                focusedContainerColor = col.FocusedInputContainer,
+                focusedLabelColor = col.FocusedInputLabel,
+            ),
+            modifier = Modifier.fillMaxWidth().padding(bottom=15.dp)
+        )
+        OutlinedTextField(
+            value = email,
+            onValueChange = { email = it },
+            label = { Text("Email Address") },
+            colors = TextFieldDefaults.colors(
+                unfocusedContainerColor = col.UnfocusedInputContainer,
+                focusedContainerColor = col.FocusedInputContainer,
+                focusedLabelColor = col.FocusedInputLabel,
+            ),
+            modifier = Modifier.fillMaxWidth().padding(bottom=15.dp)
+        )
+        OutlinedTextField(
+            value = phoneNumber,
+            onValueChange = { phoneNumber = it },
+            label = { Text("Phone Number") },
+            colors = TextFieldDefaults.colors(
+                unfocusedContainerColor = col.UnfocusedInputContainer,
+                focusedContainerColor = col.FocusedInputContainer,
+                focusedLabelColor = col.FocusedInputLabel,
+            ),
+            modifier = Modifier.fillMaxWidth().padding(bottom=25.dp)
+        )
+        Button (
+            onClick = { mainNav.navigate("home") },
+            colors = ButtonDefaults.buttonColors(
+                containerColor = col.SubmitButton
+            ),
+            modifier = Modifier.fillMaxWidth().padding(horizontal=50.dp)
+        ) {
+            Text(
+                text = "Sign Up"
+            )
+        }
     }
 }
