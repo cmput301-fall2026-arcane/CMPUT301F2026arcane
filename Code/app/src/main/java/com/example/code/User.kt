@@ -1,4 +1,4 @@
-package com.example.code.Users
+package com.example.code
 
 /* This is a model class for a user of the app. They are identified by their device id instead
 of a username and password. UserRepository creates a user on first launch and stores the user in
@@ -23,7 +23,7 @@ enum class Role {
  * @property createdAt creation time
  * @property roles set of roles the user has
  * */
-open class User (
+data class User (
     val deviceId: String = "",
     var name: String = "",
     var email: String = "",
