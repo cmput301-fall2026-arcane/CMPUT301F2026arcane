@@ -1,10 +1,17 @@
 package com.example.code
+
 /* This is a model class for a user of the app. They are identified by their device id instead
 of a username and password. UserRepository creates a user on first launch and stores the user in
 Firestore using the device id as the document id
 
 Not everything has been modeled yet
 */
+
+enum class Role {
+    ADMIN,
+    CAMP_OWNER,
+    ENTRANT
+}
 
 /**
  * A user is identified with their device id
@@ -14,12 +21,24 @@ Not everything has been modeled yet
  * @property email email of the user
  * @property phone phone number of the user
  * @property createdAt creation time
+ * @property roles set of roles the user has
  * */
-data class User (
+open class User (
     val deviceId: String = "",
-    val name: String = "",
-    val email: String = "",
-    val phone: String = "",
-    val createdAt: Long = 0L
-)
+    var name: String = "",
+    var email: String = "",
+    var phone: String = "",
+    var roles: MutableList<Role> = mutableListOf<Role>(Role.ENTRANT),
+    var notificationPreference: Boolean = true,
+    val createdAt: Long = System.currentTimeMillis(),
+) {
+//    TODO: Make image class
+//    private var images = mutableListOf<Image>()
+
+    fun hasRole(role: Role): Boolean {
+        return roles.contains(role)
+    }
+}
+
+
 
