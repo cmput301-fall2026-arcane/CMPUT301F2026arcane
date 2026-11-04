@@ -1,4 +1,4 @@
-package com.example.code
+package com.example.code.Users
 
 /* This is a model class for a user of the app. They are identified by their device id instead
 of a username and password. UserRepository creates a user on first launch and stores the user in
@@ -35,6 +35,12 @@ open class User (
 //    TODO: Make image class
 //    private var images = mutableListOf<Image>()
 
+    /**
+     * Return true if the user has the given role
+     *
+     * @param role the role to check for
+     * @return true if the user has the given role
+     */
     fun hasRole(role: Role): Boolean {
         return roles.contains(role)
     }
