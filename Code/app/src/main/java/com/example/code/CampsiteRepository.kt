@@ -3,6 +3,7 @@ package com.example.code
 import androidx.compose.runtime.mutableStateListOf
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.toObject
 
 /* Repository that reads and writes campsites in the Firestore "campsites" collection. It saves new
 registered campsites and keeps a live list of old ones for owners. Nothing else touches the Firebase
@@ -25,6 +26,7 @@ class CampsiteRepository (db: FirebaseFirestore = FirebaseFirestore.getInstance(
 
     /**
      * Starts a live listener on the campsites whose ownerId matches
+     * Updates the live list of campsites when they change in the database
      * Any listener already running is stopped first
      *
      * @param ownerId device id of the owner whose campsites need to be loaded
@@ -62,5 +64,114 @@ class CampsiteRepository (db: FirebaseFirestore = FirebaseFirestore.getInstance(
         doc.set(campsite)
             .addOnSuccessListener { onResult(true) }
             .addOnFailureListener { onResult(false) }
+    }
+
+    /**
+     * Update a campsite in the database. Parameters are optional and are ignored if not provided.
+     *
+     * @param id the id of the campsite to update
+     * @param name the new name of the campsite
+     * @param location the new location of the campsite
+     * @param maxOccupancy the new maximum occupancy of the campsite
+     * @param pricePerNight the new price per night of the campsite
+     * @param amenities the new amenities of the campsite
+     * @param description the new description of the campsite
+     */
+    fun updateCampsite(
+        id: String,
+        name: String? = null,
+        location: String? = null,
+        maxOccupancy: Int? = null,
+        pricePerNight: Double? = null,
+        amenities: MutableList<String>? = mutableListOf<String>(),
+        description: String? = null,
+    ) {
+        if (id.isEmpty()) {
+            // TODO: Passback status
+            return
+        }
+        var updated = hashMapOf<String, Any>()
+        if (name != null) {
+            updated["name"] = name
+        }
+        if (location != null) {
+            updated["location"] = location
+        }
+        if (maxOccupancy != null) {
+            updated["maxOccupancy"] = maxOccupancy
+        }
+        if (pricePerNight != null) {
+            updated["pricePerNight"] = pricePerNight
+        }
+        if (!amenities.isNullOrEmpty()) {
+            updated["amenities"] = amenities
+        }
+        if (description != null) {
+            updated["description"] = description
+        }
+        campsitesRef.document(id)
+            .update(updated)
+            .addOnSuccessListener { documentReference ->
+                // TODO: Passback status
+            }
+            .addOnFailureListener { e ->
+                //TODO: Passback status
+            }
+    }
+
+    /**
+     * Delete a campsite from the database.
+     *
+     * @param id the id of the campsite to delete
+     */
+    fun deleteCampsite(id: String) {
+        if (id.isEmpty()) {
+            // TODO: Passback status
+            return
+        }
+        campsitesRef.document(id)
+            .delete()
+            .addOnSuccessListener { documentReference ->
+                // TODO: Passback status
+            }
+            .addOnFailureListener { e ->
+                //TODO: Passback status
+            }
+    }
+
+    /**
+     * Retrieves a campsite from the database.
+     *
+     * @param id the id of the campsite to retrieve
+     *
+     * @return the campsite
+     */
+    fun getCampsite(id: String): Campsite? {
+        var campsite: Campsite? = null
+        campsitesRef.document(id)
+            .get()
+            .addOnSuccessListener { document ->
+                campsite = document.toObject<Campsite>()
+            }
+            .addOnFailureListener { e ->
+                // TODO: Passback status
+            }
+        return campsite
+    }
+
+    /**
+     * Retrieves all campsites from the database.
+     *
+     * @return a List of all campsites
+     */
+    fun getAllCampsites(): List<Campsite> {
+        var campsites = mutableListOf<Campsite>()
+        campsitesRef.get()
+            .addOnSuccessListener { documents ->
+                for (document in documents) {
+                    campsites.add(document.toObject<Campsite>())
+                }
+            }
+        return campsites
     }
 }
