@@ -56,4 +56,39 @@ class WaitlistPermissionsTest {
     fun emptyWaitlistIsNotFull() {
         assertFalse(isWaitlistFull(0, 5))
     }
+
+    @Test
+    fun registrationIsOpenInsideThePeriod() {
+        assertTrue(isRegistrationOpen(500L, 100L, 900L))
+    }
+
+    @Test
+    fun registrationIsClosedBeforeItOpens() {
+        assertFalse(isRegistrationOpen(50L, 100L, 900L))
+    }
+
+    @Test
+    fun registrationIsClosedAfterItCloses() {
+        assertFalse(isRegistrationOpen(900L, 100L, 900L))
+    }
+
+    @Test
+    fun registrationIsOpenOnTheOpeningMoment() {
+        assertTrue(isRegistrationOpen(100L, 100L, 900L))
+    }
+
+    @Test
+    fun registrationWithNoPeriodIsClosed() {
+        assertFalse(isRegistrationOpen(500L, 0L, 0L))
+    }
+
+    @Test
+    fun entryIdCombinesLotteryAndDevice() {
+        assertEquals("lottery-1_device-1", entryId("lottery-1", "device-1"))
+    }
+
+    @Test
+    fun entryIdIsDifferentPerEntrant() {
+        assertNotEquals(entryId("lottery-1", "device-1"), entryId("lottery-1", "device-2"))
+    }
 }
