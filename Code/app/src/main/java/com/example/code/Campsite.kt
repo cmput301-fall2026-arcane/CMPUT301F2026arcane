@@ -15,6 +15,7 @@ Not everything has been modeled yet
  * @property location  location of the campsite
  * @property maxOccupancy  max number of guests
  * @property pricePerNight  price of the campsite per night
+ * @property amenities  list of amenities available
  * @property description  details about the campsite
  * @property createdAt  creation time
  */
@@ -25,6 +26,7 @@ data class Campsite (
     val location: String = "",
     val maxOccupancy: Int = 0,
     val pricePerNight: Double = 0.0,
+    val amenities: MutableList<String> = mutableListOf<String>(),
     val description: String = "",
     val createdAt: Long = 0L
 )
