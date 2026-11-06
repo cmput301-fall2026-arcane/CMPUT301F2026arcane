@@ -1,4 +1,7 @@
 package com.example.code
+
+import com.google.firebase.firestore.DocumentId
+
 /* This is a model class for campsite listings. All campsites will share the same data shape.
 Register screen will build it, the CampsiteRepository will save it / load it from the Firestore
 collection which will be displayed by the list screen
@@ -21,7 +24,7 @@ Not everything has been modeled yet
  * @property imageUrl path to image
  */
 data class Campsite (
-    val id: String = "",
+    @DocumentId val id: String = "",
     val ownerId: String = "",
     val name: String = "",
     val location: String = "",

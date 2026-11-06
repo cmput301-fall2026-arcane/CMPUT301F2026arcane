@@ -28,6 +28,21 @@ class WaitlistPermissionsTest {
     }
 
     @Test
+    fun ownerCanRemoveCampsite() {
+        assertTrue(canRemoveCampsite(owner("device-1"), campsite("device-1")))
+    }
+
+    @Test
+    fun otherOwnerCannotRemoveCampsite() {
+        assertFalse(canRemoveCampsite(owner("device-2"), campsite("device-1")))
+    }
+
+    @Test
+    fun adminCanRemoveCampsite() {
+        assertTrue(canRemoveCampsite(owner("device-1"), campsite("device-1")))
+    }
+
+    @Test
     fun campsiteWithNoOwnerCannotBeViewed() {
         assertFalse(canViewWaitlist(owner(""), campsite("")))
     }
