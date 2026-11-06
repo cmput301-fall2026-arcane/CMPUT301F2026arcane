@@ -117,7 +117,9 @@ fun HomeScreen(nav: NavController) {
         ) {
             MenuButton(
                 label = "List of All Users",
-                onClick = {},
+                onClick = {
+                    nav.navigate("users")
+                },
                 height = 75.dp,
                 modifier = Modifier.weight(1f)
             )

@@ -40,4 +40,8 @@ object AppColors {
     val CampsiteCardOpen = LightGreen      // lottery still has space
     val CampsiteCardWaitlist = MossGreen   // lottery full, waiting list only
     val NavBar = LightGreen
+
+    // User List
+    val UserCardText = DeepGreen
+    val UserCard = MediumGreen
 }

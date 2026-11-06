@@ -47,7 +47,7 @@ val sampleUsers = listOf(
     UserListItem(User(name = "Pine Hollow", email = "dfsfsdfs")),
     UserListItem(User(name = "Redhorse Creek", email = "sdfdsfs")),
     UserListItem(User(name = "Fairprint Lake", email = "sdfsdfsdf")),
-            UserListItem(User(name = "Banff-ish Park", email = "dfjdkjf")),
+    UserListItem(User(name = "Banff-ish Park", email = "dfjdkjf")),
     UserListItem(User(name = "Jasper'd Park", email = "adsadsad")),
     UserListItem(User(name = "Pine Hollow", email = "dfsfsdfs")),
     UserListItem(User(name = "Redhorse Creek", email = "sdfdsfs")),
@@ -92,7 +92,7 @@ fun AdminUserListScreen(mainNav: NavController, shown: List<UserListItem>) {
                 )
             }
         }
-        Spacer(modifier = Modifier.height(60.dp))
+        Spacer(modifier = Modifier.height(150.dp))
     }
 
     Column(

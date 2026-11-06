@@ -108,3 +108,5 @@ fun EntrantHomeScreen(nav: NavController) {
         BottomNavBar("entrantHome", nav)
     }
 }
+
+
