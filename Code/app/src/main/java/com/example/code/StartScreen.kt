@@ -48,6 +48,13 @@ import com.example.code.col
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.seconds
 
+/**
+ * Simply a composable with the navigation to house all the screens
+ * that are a part of the startup and login/signup processes.
+ *
+ * @param mainNav is the navigation controller of the entire app passed in.
+ * (enables navigation out of startScreens)
+ */
 @Composable
 fun StartScreens(mainNav: NavController) {
     val localNavCon = rememberNavController()
@@ -58,6 +65,13 @@ fun StartScreens(mainNav: NavController) {
     }
 }
 
+/**
+ * This is the title screen that simply displays a logo and a flashing
+ * prompt to 'click anywhere'. This is the first screen in the app.
+ *
+ * @param localNav is the startScreens specific controller to provide
+ * navigation ability, especially towards LoginScreen.
+ */
 @Composable
 fun TitleScreen(localNav: NavController) {
     val titleLogo = painterResource(R.drawable.faketitlelogo)
@@ -112,6 +126,14 @@ fun TitleScreen(localNav: NavController) {
     }
 }
 
+/**
+ * This creates the login screen, which holds a welcome message, a login
+ * button, a sign-up button, and all other handling including opening
+ * the sign-up page and displaying error messages.
+ *
+ * @param mainNav is the primary screen navigation controller shared.
+ * @param localNav is the local screen navigation within startScreens.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(mainNav: NavController, localNav: NavController) {
@@ -202,6 +224,12 @@ fun LoginScreen(mainNav: NavController, localNav: NavController) {
     }
 }
 
+/**
+ * Creates the layout for the sign-up elements located inside
+ * the login screen's modal bottom sheet.
+ *
+ * @param mainNav is the navigation controller passed in to share control
+ */
 @Composable
 fun SignUpScreen(mainNav: NavController) {
     var name by remember { mutableStateOf("") }
@@ -342,7 +370,7 @@ fun SignUpScreen(mainNav: NavController) {
  * @param phone input field for mutation
  * @param deviceID input field for creation and query
  * @param type input field for mutation
- * @oaram onDone callback function to handle success levels
+ * @param onDone callback function to handle success levels
  */
 fun handleSignUp(name: String, email: String, phone: String,
                  deviceID: String, type: String, onDone : (Number) -> Unit) {
@@ -376,7 +404,14 @@ fun handleSignUp(name: String, email: String, phone: String,
 }
 
 /**
+ * Processes user login request
  *
+ * This function queries for the user device ID. If it exists, we can simply
+ * return true so the parent navigates to the home page. Else, we return
+ * false
+ *
+ * @param deviceID field used for user query
+ * @param onDone callback function to handle success levels
  */
 fun handleLogin( deviceID: String, onDone : (Boolean) -> Unit) {
     users.getUser(deviceID) { user ->
