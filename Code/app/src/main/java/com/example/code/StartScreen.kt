@@ -1,6 +1,6 @@
 package com.example.code
 
-import android.provider.Settings
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -30,7 +31,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -40,10 +40,22 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.code.R
-import com.example.code.col
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.seconds
 
+
+
+// TEMP LOGIN
+private const val TEMP_USERNAME = "admin"
+private const val TEMP_PASSWORD = "camp123"
+
+fun checkTempLogin(username: String, password: String): Boolean {
+    return username.trim().equals(TEMP_USERNAME, ignoreCase = true) && password == TEMP_PASSWORD
+}
 @Composable
 fun StartScreens(mainNav: NavController) {
     val localNavCon = rememberNavController()
@@ -110,12 +122,20 @@ fun LoginScreen(mainNav: NavController, localNav: NavController) {
     var user by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var shownPassword by remember { mutableStateOf("") }
+    var loginError by remember { mutableStateOf<String?>(null)}
     var showSignUp by remember { mutableStateOf(false) }
 
     val sheetState = rememberModalBottomSheetState( skipPartiallyExpanded = true )
 
-    val context = LocalContext.current
-    val dId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
+    fun tryLogin() {
+        if (checkTempLogin(user, password)) {
+            mainNav.navigate("campsites") {
+                popUpTo("start") { inclusive = true }
+            }
+        } else {
+            loginError = "Incorrect username or password"
+        }
+    }
 
     Column (
         modifier = Modifier.fillMaxSize().padding(55.dp),
@@ -137,8 +157,13 @@ fun LoginScreen(mainNav: NavController, localNav: NavController) {
         )
         OutlinedTextField(
             value = user,
-            onValueChange = { user = it },
+            onValueChange = { user = it ; loginError = null},
             label = { Text("Username / Email") },
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Email,
+                capitalization = KeyboardCapitalization.None,
+                imeAction = ImeAction.Next
+            ),
             colors = TextFieldDefaults.colors(
                 unfocusedContainerColor = col.UnfocusedInputContainer,
                 focusedContainerColor = col.FocusedInputContainer,
@@ -148,8 +173,22 @@ fun LoginScreen(mainNav: NavController, localNav: NavController) {
         )
         OutlinedTextField(
             value = shownPassword,
-            onValueChange = { password = it; shownPassword = "*".repeat(password.length) },
+            onValueChange = { newShown ->
+            password = if (newShown.length > password.length) {
+                password + newShown.substring(password.length)  // letters were added
+            } else {
+                password.take(newShown.length)                  // letters were deleted
+            }
+                shownPassword = "*".repeat(password.length)
+                loginError = null
+            },
             label = { Text("Password") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Password,
+                imeAction = ImeAction.Done
+            ),
+            keyboardActions = KeyboardActions(onDone = { tryLogin() }),
             colors = TextFieldDefaults.colors(
                 unfocusedContainerColor = col.UnfocusedInputContainer,
                 focusedContainerColor = col.FocusedInputContainer,
@@ -157,8 +196,15 @@ fun LoginScreen(mainNav: NavController, localNav: NavController) {
                 ),
             modifier = Modifier.fillMaxWidth().padding(bottom=10.dp)
         )
+        loginError?.let {
+            Text(
+                text = it,
+                color = Color(0xFFFF8A80),
+                modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp)
+            )
+        }
         Button (
-            onClick = { },
+            onClick = { tryLogin() },
             colors = ButtonDefaults.buttonColors(
                 containerColor = col.SubmitButton
             ),
