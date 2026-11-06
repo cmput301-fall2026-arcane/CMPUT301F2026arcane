@@ -19,16 +19,19 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,11 +41,23 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.code.R
+import kotlinx.coroutines.launch
+import kotlin.coroutines.cancellation.CancellationException
+
+/* US 01.01.05 As an entrant, I want to see details of a campsite
+US 01.01.06 As an entrant, I want to join an active lottery from the campsite details screen
+US 01.02.01 As an entrant, I want to join the waiting list for a campsite lottery
+US 01.02.02 As an entrant, I want to leave the waiting list for a campsite lottery
+
+Campsite details page. Loads the campsite and its lottery, and the lottery button enters, leaves,
+reserves or opens the reservation depending on where the entrant stands
+*/
 
 /**
  * Shows the details of one campsite
@@ -53,9 +68,18 @@ import com.example.code.R
 @Composable
 fun CampsiteScreen(mainNav: NavController, campsiteId: String) {
     val repo = remember { CampsiteRepository() }
+    val entrantLotteries = remember { EntrantLotteries() }
+    val scope = rememberCoroutineScope()
     var campsite by remember { mutableStateOf<Campsite?>(null) }
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
+
+    var lotteryState by remember { mutableStateOf<CampsiteLotteryState?>(null) }
+    var refreshKey by remember { mutableStateOf(0) }   // bump to reload the lottery state
+    var busy by remember { mutableStateOf(false) }
+    var message by remember { mutableStateOf<String?>(null) }
+    var showLeaveConfirm by remember { mutableStateOf(false) }
+    var showReserveDates by remember { mutableStateOf(false) }
 
     // load the campsite once when the screen opens
     LaunchedEffect(campsiteId) {
@@ -64,6 +88,38 @@ fun CampsiteScreen(mainNav: NavController, campsiteId: String) {
             onDone = { campsite = it; loading = false },
             onError = { error = it.message ?: "Could not load the campsite"; loading = false }
         )
+    }
+
+    // load the lottery state when the screen opens and after every action
+    LaunchedEffect(campsiteId, refreshKey) {
+        lotteryState = try {
+            entrantLotteries.stateForCampsite(campsiteId, currentEntrant())
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            message = e.message ?: "Could not load the lottery"
+            null
+        }
+    }
+
+    val state = lotteryState
+    val status = state?.status
+
+    fun onLotteryButton() {
+        val lottery = state?.lottery ?: return
+        when (status) {
+            EntrantLotteryStatus.OPEN -> scope.launch {
+                busy = true
+                message = joinMessage(entrantLotteries.enter(lottery, currentEntrant()))
+                busy = false
+                refreshKey++
+            }
+            EntrantLotteryStatus.JOINED -> showLeaveConfirm = true
+            EntrantLotteryStatus.WON -> showReserveDates = true
+            EntrantLotteryStatus.RESERVED ->
+                state?.reservation?.let { mainNav.navigate("reservation/${it.id}") }
+            else -> {}
+        }
     }
 
     Scaffold(
@@ -81,13 +137,68 @@ fun CampsiteScreen(mainNav: NavController, campsiteId: String) {
                 loaded == null -> Text("Campsite not found", color = Color.White)
                 else -> CampsiteDetailsCard(
                     campsite = loaded,
-                    // TODO: true if the lottery has space, false if only the waiting list is left
-                    lotteryOpen = true,
+                    lotteryLabel = status?.let { lotteryButtonLabel(it) } ?: "LOADING...",
+                    lotteryEnabled = status != null && canPressLotteryButton(status) && !busy,
+                    lotteryMessage = message ?: status?.let { lotteryStatusMessage(it, state?.lottery) },
                     onBack = { mainNav.popBackStack() },
-                    onEnter = { /* TODO: enter lottery or join waiting list */ }
+                    onLotteryButton = { message = null; onLotteryButton() }
                 )
             }
         }
+    }
+
+    if (showLeaveConfirm) {
+        AlertDialog(
+            onDismissRequest = { showLeaveConfirm = false },
+            title = { Text("Leave this lottery?") },
+            text = { Text("You'll lose your spot. You can enter again while registration is open.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showLeaveConfirm = false
+                    state?.lottery?.let { lottery ->
+                        scope.launch {
+                            busy = true
+                            message = leaveMessage(entrantLotteries.leave(lottery, currentEntrant()))
+                            busy = false
+                            refreshKey++
+                        }
+                    }
+                }) { Text("Leave") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLeaveConfirm = false }) { Text("Stay") }
+            }
+        )
+    }
+
+    if (showReserveDates) {
+        CampsiteDateRangeDialog(
+            startDate = null,
+            endDate = null,
+            onConfirm = { start, end ->
+                showReserveDates = false
+                val lottery = state?.lottery
+                val site = campsite
+                if (lottery != null && site != null && start != null) {
+                    scope.launch {
+                        busy = true
+                        try {
+                            val reservation = entrantLotteries.reserve(
+                                currentEntrant(), lottery, site, start, end ?: start
+                            )
+                            mainNav.navigate("reservation/${reservation.id}")
+                        } catch (e: CancellationException) {
+                            throw e
+                        } catch (e: Exception) {
+                            message = e.message ?: "Could not make the reservation"
+                        }
+                        busy = false
+                        refreshKey++
+                    }
+                }
+            },
+            onDismiss = { showReserveDates = false }
+        )
     }
 }
 
@@ -95,16 +206,20 @@ fun CampsiteScreen(mainNav: NavController, campsiteId: String) {
  * The rounded card holding everything about the campsite
  *
  * @param campsite the campsite to show
- * @param lotteryOpen true shows "Enter Lottery", false shows "Join Waiting List"
+ * @param lotteryLabel text on the lottery button
+ * @param lotteryEnabled false greys the lottery button out
+ * @param lotteryMessage one line about the lottery shown above the buttons, or null
  * @param onBack called when the back button is tapped
- * @param onEnter called when the lottery / waiting list button is tapped
+ * @param onLotteryButton called when the lottery button is tapped
  */
 @Composable
 private fun CampsiteDetailsCard(
     campsite: Campsite,
-    lotteryOpen: Boolean,
+    lotteryLabel: String,
+    lotteryEnabled: Boolean,
+    lotteryMessage: String?,
     onBack: () -> Unit,
-    onEnter: () -> Unit
+    onLotteryButton: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -120,7 +235,6 @@ private fun CampsiteDetailsCard(
         ) {
             Header(campsite)
 
-            // TODO: swap for the campsite's own photo once Campsite has an image field
             Image(
                 painter = campsiteImage(campsite),
                 contentDescription = null,
@@ -160,6 +274,18 @@ private fun CampsiteDetailsCard(
                 )
                 Spacer(modifier = Modifier.height(20.dp))
 
+                if (lotteryMessage != null) {
+                    Text(
+                        text = lotteryMessage,
+                        color = col.CardText,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                }
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally)
@@ -174,14 +300,19 @@ private fun CampsiteDetailsCard(
                         Text("↩", color = col.CardText, fontSize = 18.sp)
                     }
                     Button(
-                        onClick = onEnter,
+                        onClick = onLotteryButton,
+                        enabled = lotteryEnabled,
                         shape = RoundedCornerShape(6.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = col.CampsiteCardWaitlist),
-                        modifier = Modifier.width(170.dp).height(36.dp)
+                        contentPadding = PaddingValues(horizontal = 8.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = col.CampsiteCardWaitlist,
+                            disabledContainerColor = col.CampsiteCardWaitlist.copy(alpha = 0.5f)
+                        ),
+                        modifier = Modifier.width(190.dp).height(36.dp)
                     ) {
                         Text(
-                            text = if (lotteryOpen) "ENTER LOTTERY" else "JOIN WAITING LIST",
-                            color = col.CardText,
+                            text = lotteryLabel,
+                            color = col.CardText.copy(alpha = if (lotteryEnabled) 1f else 0.6f),
                             fontSize = 13.sp
                         )
                     }
