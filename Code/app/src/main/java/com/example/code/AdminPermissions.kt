@@ -14,6 +14,13 @@ fun canRemoveProfiles(actor: User): Boolean {
 }
 
 /**
+ * Checks whether a user can remove a campsite and the campsite
+ */
+fun canRemoveCampsite(actor: User, campsite: Campsite): Boolean {
+    return actor.hasRole(Role.ADMIN) || (actor.hasRole(Role.CAMP_OWNER) && campsite.ownerId == actor.deviceId)
+}
+
+/**
  * Checks whether a profile belongs to the actor, used to warn an admin before they remove
  * their own profile
  *
