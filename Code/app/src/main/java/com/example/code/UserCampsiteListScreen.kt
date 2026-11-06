@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.code.R
+import androidx.compose.material3.TextButton
 
 //private val sampleCampsites = listOf(
 //    CampsiteListItem(Campsite(id = "sample1", name = "Banff-ish Park", location = "Banff"), true),
@@ -57,19 +58,15 @@ data class CampsiteListItem(
     val campsite: Campsite,
     val lotteryOpen: Boolean = true
 )
-fun filterCampsites(items: List<CampsiteListItem>, query: String): List<CampsiteListItem> {
-    val q = query.trim()
-    if (q.isEmpty()) return items
-    return items.filter {
-        it.campsite.name.contains(q, ignoreCase = true) ||
-                it.campsite.location.contains(q, ignoreCase = true)
-    }
-}
+
 
 @Composable
 fun UserCampsiteListScreen(mainNav: NavController) {
 
     var search by remember { mutableStateOf("") }
+    var filters by remember { mutableStateOf(CampsiteFilters()) }
+    var showFilters by remember { mutableStateOf(false) }
+    var showDates by remember { mutableStateOf(false) }
 
     DisposableEffect(Unit){
         sites.listenToAll()
@@ -77,7 +74,7 @@ fun UserCampsiteListScreen(mainNav: NavController) {
     }
 
     // TODO: load from CampsiteRepository instead of the sample list
-    val shown = filterCampsites(sites.liveCampsites.map {CampsiteListItem(it)}, search)
+    val shown = filterCampsites(sites.liveCampsites.map {CampsiteListItem(it)}, search, filters)
 
     Scaffold(
         containerColor = Color.Transparent, // let the ArcaneApp background image show through
@@ -107,7 +104,7 @@ fun UserCampsiteListScreen(mainNav: NavController) {
             Spacer(modifier = Modifier.height(12.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Button(
-                    onClick = { /* TODO: date picker */ },
+                    onClick = { showDates = true },
                     shape = RoundedCornerShape(50),
                     contentPadding = PaddingValues(0.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = col.FilterButton),
@@ -117,15 +114,34 @@ fun UserCampsiteListScreen(mainNav: NavController) {
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Button(
-                    onClick = { /* TODO: filters sheet */ },
+                    onClick = { showFilters = true },
                     shape = RoundedCornerShape(50),
                     colors = ButtonDefaults.buttonColors(containerColor = col.FilterButton),
                     modifier = Modifier.weight(1f).height(36.dp)
                 ) {
-                    Text("Set Filters", color = col.CardText)
+                    Text(
+                        text = if (filters.activeCount > 0) "Set Filters (${filters.activeCount})" else "Set Filters",
+                        color = col.CardText
+                    )
+                }
+            }
+            if (filters.activeCount > 0) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = filterSummary(filters),
+                        color = Color.White,
+                        fontSize = 13.sp,
+                        modifier = Modifier.weight(1f)
+                    )
+                    TextButton(onClick = { filters = CampsiteFilters() }) {
+                        Text("Clear all", color = Color.White)
+                    }
                 }
             }
             Spacer(modifier = Modifier.height(24.dp))
+            if (shown.isEmpty() && sites.allCampsitesLoaded) {
+                Text("No campsites match your search", color = Color.White)
+            }
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(14.dp),
                 contentPadding = PaddingValues(bottom = 16.dp),
@@ -142,6 +158,26 @@ fun UserCampsiteListScreen(mainNav: NavController) {
             }
         }
     }
+
+    if (showFilters) {
+        CampsiteFilterSheet(
+            current = filters,
+            onApply = { filters = it; showFilters = false },
+            onDismiss = { showFilters = false }
+        )
+    }
+    if (showDates) {
+        CampsiteDateRangeDialog(
+            startDate = filters.startDate,
+            endDate = filters.endDate,
+            onConfirm = { start, end ->
+                filters = filters.copy(startDate = start, endDate = end)
+                showDates = false
+            },
+            onDismiss = { showDates = false }
+        )
+    }
+
 }
 
 /**
