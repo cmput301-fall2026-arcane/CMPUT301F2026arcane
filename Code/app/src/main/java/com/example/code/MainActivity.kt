@@ -20,6 +20,8 @@ lateinit var sites : CampsiteRepository
 var logged_user_type : Role = Role.ENTRANT // just defaulted for now
 var logged_in_device : String = ""
 var logged_in_name : String = ""
+var logged_in_email : String = ""
+var logged_in_phone : String = ""
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

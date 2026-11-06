@@ -402,6 +402,8 @@ fun handleSignUp(name: String, email: String, phone: String,
                         logged_user_type = role
                         logged_in_name = name
                         logged_in_device = deviceID
+                        logged_in_email = email
+                        logged_in_phone = phone
                         onDone(0)
                     })
                 })
@@ -426,6 +428,8 @@ fun handleLogin( deviceID: String, onDone : (Boolean) -> Unit) {
             logged_user_type = user.roles[0]
             logged_in_name = user.name
             logged_in_device = user.deviceId
+            logged_in_email = user.email
+            logged_in_phone = user.phone
             onDone(true)
         } else {
             onDone(false)
