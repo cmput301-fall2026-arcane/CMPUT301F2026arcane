@@ -150,7 +150,7 @@ fun LoginScreen(mainNav: NavController, localNav: NavController) {
         if (raiseError) {
             Text(
                 text = "Your login was not found.\n" +
-                        "Please sign in instead.",
+                        "  Please sign in instead.",
                 fontSize = 15.sp,
                 color = Color.Red
             )
@@ -159,7 +159,7 @@ fun LoginScreen(mainNav: NavController, localNav: NavController) {
         Button (
             onClick = { handleLogin ( dId, { success ->
                 if (success) {
-                    mainNav.navigate("campsites")
+                    mainNav.navigate("home")
                 } else {
                     raiseError = true
                 }

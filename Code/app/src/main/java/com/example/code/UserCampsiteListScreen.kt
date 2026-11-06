@@ -187,25 +187,26 @@ fun CampsiteCard(item: CampsiteListItem, onClick: () -> Unit) {
  * @param selected route of the current screen, its icon is drawn fully opaque
  * @param onSelect called with the route of the tapped icon
  */
-@Composable
-fun BottomNavBar(selected: String, onSelect: (String) -> Unit = {}) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .navigationBarsPadding()
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(col.NavBar)
-            .height(64.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        NavBarIcon("📷", "scan", selected, onSelect)
-        NavBarIcon("🔔", "notifications", selected, onSelect)
-        NavBarIcon("🏠", "home", selected, onSelect)
-        NavBarIcon("👤", "profile", selected, onSelect)
-    }
-}
+//@Composable
+//fun BottomNavBar(selected: String, onSelect: (String) -> Unit = {}) {
+//    Row(
+//        modifier = Modifier
+//            .fillMaxWidth()
+//            .navigationBarsPadding()
+//            .padding(horizontal = 16.dp, vertical = 12.dp)
+//            .clip(RoundedCornerShape(12.dp))
+//            .background(col.NavBar)
+//            .height(64.dp),
+//        horizontalArrangement = Arrangement.SpaceEvenly,
+//        verticalAlignment = Alignment.CenterVertically
+//    ) {
+//        NavBarIcon("📷", "scan", selected, onSelect)
+//        NavBarIcon("🔔", "notifications", selected, onSelect)
+//        NavBarIcon("🏠", "home", selected, onSelect)
+//        NavBarIcon("👤", "profile", selected, onSelect)
+//    }
+//}
+
 // TODO: swap the emoji for Material icons once material-icons-extended is added to gradle
 @Composable
 private fun NavBarIcon(
