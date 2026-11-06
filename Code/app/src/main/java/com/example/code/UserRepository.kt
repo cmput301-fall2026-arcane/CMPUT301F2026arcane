@@ -55,6 +55,7 @@ class UserRepository (db: FirebaseFirestore = FirebaseFirestore.getInstance()){
         email: String? = null,
         phone: String? = null,
         notificationPreference: Boolean? = null,
+        onDone: (Boolean) -> Unit
     ) {
         if (deviceId.isEmpty()) {
             // TODO: Passback status
@@ -79,10 +80,10 @@ class UserRepository (db: FirebaseFirestore = FirebaseFirestore.getInstance()){
                 updated
             )
             .addOnSuccessListener { documentReference ->
-                // TODO: Passback status
+                onDone(true)
             }
             .addOnFailureListener { e ->
-                //TODO: Passback status
+                onDone(false)
             }
     }
 
@@ -91,18 +92,19 @@ class UserRepository (db: FirebaseFirestore = FirebaseFirestore.getInstance()){
      *
      * @param deviceId the device ID of the user to delete
      */
-    fun deleteUser(deviceId: String) {
+    fun deleteUser(deviceId: String,
+                   onDone: (Boolean) -> Unit) {
         if (deviceId.isEmpty()) {
-            // TODO: Passback status
+            onDone(false)
             return
         }
         usersRef.document(deviceId)
             .delete()
             .addOnSuccessListener { documentReference ->
-                // TODO: Passback status
+                onDone(true)
             }
             .addOnFailureListener { e ->
-                //TODO: Passback status
+                onDone(false)
             }
     }
 
@@ -113,15 +115,18 @@ class UserRepository (db: FirebaseFirestore = FirebaseFirestore.getInstance()){
      *
      * @return the user's information
      */
-    fun getUser(deviceId: String): User? {
+    fun getUser(deviceId: String,
+                onDone: (User?) -> Unit): User? {
         var user: User? = null
         usersRef.document(deviceId)
             .get()
             .addOnSuccessListener { document ->
                 user = document.toObject<User>()
+                if (user == null) onDone(null)
+                else onDone(user)
             }
             .addOnFailureListener { e ->
-                // TODO: Passback status
+                onDone(null)
             }
 
         return user
@@ -132,18 +137,14 @@ class UserRepository (db: FirebaseFirestore = FirebaseFirestore.getInstance()){
      *
      * @return a List of all users
      */
-    fun getAllUsers(): List<User> {
-        var users = mutableListOf<User>()
+    fun getAllUsers(onDone: (List<User>?) -> Unit) {
         usersRef.get()
-            .addOnSuccessListener { documents ->
-                for (document in documents) {
-                    users.add(document.toObject<User>())
-                }
+            .addOnSuccessListener { snapshot ->
+                onDone(snapshot.documents.mapNotNull { it.toObject<User>() })
             }
-            .addOnFailureListener { e ->
-                // TODO: Passback status
+            .addOnFailureListener {
+                onDone(null)
             }
-        return users
     }
 
     /**
@@ -155,14 +156,14 @@ class UserRepository (db: FirebaseFirestore = FirebaseFirestore.getInstance()){
      * @see removeRole
      * @see updateUser
      */
-    fun addRole(deviceId: String, role: Role) {
+    fun addRole(deviceId: String, role: Role, onDone: (Boolean) -> Unit) {
         usersRef.document(deviceId)
             .update("roles", FieldValue.arrayUnion(role))
             .addOnSuccessListener { documentReference ->
-                // TODO: Passback status
+                onDone(true)
             }
             .addOnFailureListener { e ->
-                // TODO: Passback status
+                onDone(false)
             }
     }
 

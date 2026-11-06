@@ -26,6 +26,7 @@ Not everything has been modeled yet
  * @property imagePath  storage path of the photo, kept so it can be deleted later
  * @property tags  short labels the owner adds to help the campsite be found
  * @property createdAt  creation time
+ * @property imageUrl path to image
  */
 data class Campsite (
     @DocumentId val id: String = "",
@@ -36,6 +37,7 @@ data class Campsite (
     val pricePerNight: Double = 0.0,
     val amenities: MutableList<String> = mutableListOf<String>(),
     val description: String = "",
+)
     val latitude: Double = 0.0,
     val longitude: Double = 0.0,
     val imageUrl: String = "",

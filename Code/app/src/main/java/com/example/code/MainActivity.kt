@@ -4,45 +4,42 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.runtime.remember
+import com.example.code.ui.theme.AppColors
 import com.example.code.ui.theme.CodeTheme
+import com.google.firebase.Firebase
+import com.google.firebase.FirebaseApp
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.firestore
+
+val col = AppColors
+
+lateinit var users : UserRepository
+lateinit var sites : CampsiteRepository
+// this is set by login/signup and then read by screens that depend on user type
+var logged_user_type : Role = Role.ENTRANT // just defaulted for now
+var logged_in_device : String = ""
+var logged_in_name : String = ""
+var logged_in_email : String = ""
+var logged_in_phone : String = ""
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        FirebaseApp.initializeApp(this)
+
+
+        val db = FirebaseFirestore.getInstance()
+        users = UserRepository(db)
+        sites = CampsiteRepository(db)
+
+
         enableEdgeToEdge()
         setContent {
             CodeTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                ArcaneApp()
             }
         }
     }
 }
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    CodeTheme {
-        Greeting("Android")
-    }
-}
-
