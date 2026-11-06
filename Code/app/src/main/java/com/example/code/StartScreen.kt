@@ -181,7 +181,9 @@ fun LoginScreen(mainNav: NavController, localNav: NavController) {
         Button (
             onClick = { handleLogin ( dId, { success ->
                 if (success) {
-                    mainNav.navigate("home")
+                    if (logged_user_type == Role.ADMIN) mainNav.navigate("adminHome")
+                    else if (logged_user_type == Role.ENTRANT) mainNav.navigate("entrantHome")
+                    else if (logged_user_type == Role.CAMP_OWNER) mainNav.navigate("campOwnerHome")
                 } else {
                     raiseError = true
                 }
@@ -308,7 +310,7 @@ fun SignUpScreen(mainNav: NavController) {
         Button (
             onClick = { handleSignUp(name, email, phoneNumber, dId, "e", { exitCode ->
                         if (exitCode == 0) {
-                            mainNav.navigate("home")
+                            mainNav.navigate("EntrantHome")
                         } else if (exitCode == 1) {
                             errorMessage = "Please fill all required fields."
                             raiseError = true
@@ -334,7 +336,7 @@ fun SignUpScreen(mainNav: NavController) {
         Button (
             onClick = { handleSignUp(name, email, phoneNumber, dId, "c", { exitCode ->
                         if (exitCode == 0) {
-                            mainNav.navigate("home")
+                            mainNav.navigate("campOwnerhome")
                         } else if (exitCode == 1) {
                             errorMessage = "Please fill all required fields."
                             raiseError = true
@@ -396,7 +398,12 @@ fun handleSignUp(name: String, email: String, phone: String,
                         onDone(1)
                         return@updateUser
                     }
-                    users.addRole(deviceID, role, { onDone(0) })
+                    users.addRole(deviceID, role, {
+                        logged_user_type = role
+                        logged_in_name = name
+                        logged_in_device = deviceID
+                        onDone(0)
+                    })
                 })
             })
         }
@@ -416,6 +423,9 @@ fun handleSignUp(name: String, email: String, phone: String,
 fun handleLogin( deviceID: String, onDone : (Boolean) -> Unit) {
     users.getUser(deviceID) { user ->
         if (user != null) {
+            logged_user_type = user.roles[0]
+            logged_in_name = user.name
+            logged_in_device = user.deviceId
             onDone(true)
         } else {
             onDone(false)

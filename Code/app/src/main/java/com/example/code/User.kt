@@ -28,7 +28,8 @@ data class User (
     var name: String = "",
     var email: String = "",
     var phone: String = "",
-    var roles: MutableList<Role> = mutableListOf<Role>(Role.ENTRANT),
+    var roles: MutableList<Role> = mutableListOf(),
+//    var roles: MutableList<Role> = mutableListOf<Role>(Role.ENTRANT),
     var notificationPreference: Boolean = true,
     val createdAt: Long = System.currentTimeMillis(),
 ) {

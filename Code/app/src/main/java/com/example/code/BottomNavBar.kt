@@ -17,6 +17,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 
 /* The floating bar at the bottom of the main screens. Defined once here and called from every
 screen that needs it
@@ -26,10 +27,10 @@ screen that needs it
  * The floating bar at the bottom of the main screens
  *
  * @param selected route of the current screen, its icon is drawn fully opaque
- * @param onSelect called with the route of the tapped icon
+ * @param navCont used to give navigation functions to the icons on the bar
  */
 @Composable
-fun BottomNavBar(selected: String, onSelect: (String) -> Unit = {}) {
+fun BottomNavBar(selected: String, navCont: NavController) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -41,10 +42,10 @@ fun BottomNavBar(selected: String, onSelect: (String) -> Unit = {}) {
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        NavBarIcon("📷", "scan", selected, onSelect)
-        NavBarIcon("🔔", "notifications", selected, onSelect)
-        NavBarIcon("🏠", "home", selected, onSelect)
-        NavBarIcon("👤", "profile", selected, onSelect)
+        NavBarIcon("📷", "scan", selected, "qrscan", navCont)
+        NavBarIcon("🔔", "notifications", selected, "notifications", navCont)
+        NavBarIcon("🏠", "home", selected, "home", navCont)
+        NavBarIcon("👤", "profile", selected, "profile", navCont)
     }
 }
 
@@ -54,9 +55,19 @@ private fun NavBarIcon(
     emoji: String,
     route: String,
     selected: String,
-    onSelect: (String) -> Unit
+    function: String,
+    navCont: NavController
 ) {
-    IconButton(onClick = { onSelect(route) }) {
+    IconButton(onClick = {
+        if (function == "profile") navCont.navigate("profile")
+        else if (function == "qrscan") navCont.navigate("qrscan")
+        else if (function == "notifications") navCont.navigate("notifications")
+        else if (function == "home") {
+            if (logged_user_type == Role.ENTRANT) navCont.navigate("entrantHome")
+            else if (logged_user_type == Role.CAMP_OWNER) navCont.navigate("campOwnerHome")
+            else if (logged_user_type == Role.ADMIN) navCont.navigate("adminHome")
+        }
+    }) {
         Text(
             text = emoji,
             fontSize = 22.sp,

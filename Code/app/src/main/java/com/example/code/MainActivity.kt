@@ -15,6 +15,11 @@ val col = AppColors
 
 lateinit var users : UserRepository
 
+// this is set by login/signup and then read by screens that depend on user type
+var logged_user_type : Role = Role.ENTRANT // just defaulted for now
+var logged_in_device : String = ""
+var logged_in_name : String = ""
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

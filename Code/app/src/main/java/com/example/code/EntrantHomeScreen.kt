@@ -101,4 +101,10 @@ fun EntrantHomeScreen(nav: NavController) {
             )
         }
     }
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Bottom
+    ) {
+        BottomNavBar("entrantHome", nav)
+    }
 }

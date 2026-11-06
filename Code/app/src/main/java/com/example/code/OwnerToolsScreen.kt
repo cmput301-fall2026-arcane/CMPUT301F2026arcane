@@ -150,7 +150,7 @@ fun OwnerToolsScreen(nav: NavController, campsiteName: String) {
             )
         }
 
-        BottomNavBar(selected = selected, onSelect = { selected = it })
+        BottomNavBar(selected = selected, nav)
     }
 }
 

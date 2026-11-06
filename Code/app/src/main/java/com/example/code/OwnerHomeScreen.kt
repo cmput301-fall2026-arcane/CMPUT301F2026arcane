@@ -109,4 +109,10 @@ fun OwnerHomeScreen(nav: NavController) {
             modifier = Modifier.fillMaxWidth()
         )
     }
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Bottom
+    ) {
+        BottomNavBar("campOwnerHome", nav)
+    }
 }

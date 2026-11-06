@@ -74,7 +74,7 @@ fun UserCampsiteListScreen(mainNav: NavController) {
 
     Scaffold(
         containerColor = Color.Transparent, // let the ArcaneApp background image show through
-        bottomBar = { BottomNavBar(selected = "home") }
+        bottomBar = { BottomNavBar(selected = "home", mainNav) }
     ) { innerPadding ->
         Column(
             modifier = Modifier

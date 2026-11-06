@@ -33,7 +33,10 @@ fun ArcaneApp() {
 
     NavHost(navController = mainNavCon, startDestination = "start") {
         composable("start") { StartScreens(mainNavCon) }
-        composable("home") { HomeScreen(mainNavCon)}
+        composable("entrantHome") { EntrantHomeScreen(mainNavCon) }
+        composable("campOwnerHome") { OwnerHomeScreen(mainNavCon) }
+        composable("adminHome") { HomeScreen(mainNavCon) }
         composable("campsites") { UserCampsiteListScreen(mainNavCon) }
+        composable("profile") { ProfileScreen(mainNavCon) }
     }
 }

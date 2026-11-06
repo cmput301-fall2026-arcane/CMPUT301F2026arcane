@@ -130,4 +130,10 @@ fun HomeScreen(nav: NavController) {
             )
         }
     }
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Bottom
+    ) {
+        BottomNavBar("adminHome", nav)
+    }
 }
