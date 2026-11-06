@@ -37,10 +37,10 @@ data class Campsite (
     val pricePerNight: Double = 0.0,
     val amenities: MutableList<String> = mutableListOf<String>(),
     val description: String = "",
-)
+    val imageUrl: String = "",
     val latitude: Double = 0.0,
     val longitude: Double = 0.0,
-    val imageUrl: String = "",
+)
     val imagePath: String = "",
     val tags: MutableList<String> = mutableListOf<String>(),
     val createdAt: Long = 0L
