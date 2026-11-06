@@ -154,42 +154,6 @@ fun OwnerToolsScreen(nav: NavController, campsiteName: String) {
     }
 }
 
-@Composable
-private fun NavBarIcon(
-    emoji: String,
-    route: String,
-    selected: String,
-    onSelect: (String) -> Unit
-) {
-    IconButton(onClick = { onSelect(route) }) {
-        Text(
-            text = emoji,
-            fontSize = 22.sp,
-            modifier = Modifier.alpha(if (route == selected) 1f else 0.5f)
-        )
-    }
-}
-
-@Composable
-fun BottomNavBar(selected: String, onSelect: (String) -> Unit = {}) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .navigationBarsPadding()
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(col.NavBar)
-            .height(64.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        NavBarIcon("📷", "scan", selected, onSelect)
-        NavBarIcon("🔔", "notifications", selected, onSelect)
-        NavBarIcon("🏠", "home", selected, onSelect)
-        NavBarIcon("👤", "profile", selected, onSelect)
-    }
-}
-
 @Preview(showBackground = true, backgroundColor = 0xFF333333)
 @Composable
 fun CampsiteToolsScreenPreview() {

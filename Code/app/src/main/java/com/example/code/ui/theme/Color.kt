@@ -29,6 +29,9 @@ object AppColors {
     val SubmitButton = DarkGreen
     val FilterButton = MediumGreen
 
+    val HomeButton = MediumGreen
+    val HomeButtonText = DarkGreen
+
     // Modal Bottom Sheet
     val BottomSheetBackground = MediumGreen
 
@@ -37,8 +40,4 @@ object AppColors {
     val CampsiteCardOpen = LightGreen      // lottery still has space
     val CampsiteCardWaitlist = MossGreen   // lottery full, waiting list only
     val NavBar = LightGreen
-
-    // Home Screen Buttons/Texts
-    val HomeButton = Color(0xFF8FB996)
-    val HomeButtonText = Color(0xFF1F2D24)
 }
