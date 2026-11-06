@@ -1,6 +1,8 @@
 package com.example.code
 
-
+import android.R.attr.name
+import android.R.attr.phoneNumber
+import android.provider.Settings
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -11,7 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -31,8 +33,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -40,22 +44,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.code.R
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.text.input.KeyboardType
+import com.example.code.col
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.seconds
 
-
-
-// TEMP LOGIN
-private const val TEMP_USERNAME = "admin"
-private const val TEMP_PASSWORD = "camp123"
-
-fun checkTempLogin(username: String, password: String): Boolean {
-    return username.trim().equals(TEMP_USERNAME, ignoreCase = true) && password == TEMP_PASSWORD
-}
 @Composable
 fun StartScreens(mainNav: NavController) {
     val localNavCon = rememberNavController()
@@ -82,7 +74,9 @@ fun TitleScreen(localNav: NavController) {
     }
 
     Column (
-        modifier = Modifier.fillMaxSize().padding(16.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -90,7 +84,9 @@ fun TitleScreen(localNav: NavController) {
             painter = titleLogo,
             contentDescription = null,
             contentScale = ContentScale.FillWidth,
-            modifier = Modifier.fillMaxWidth().padding(32.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(32.dp),
             alpha = 1.0F
         )
         Spacer(modifier = Modifier.height(350.dp))
@@ -119,26 +115,19 @@ fun TitleScreen(localNav: NavController) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(mainNav: NavController, localNav: NavController) {
-    var user by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var shownPassword by remember { mutableStateOf("") }
-    var loginError by remember { mutableStateOf<String?>(null)}
     var showSignUp by remember { mutableStateOf(false) }
+
+    var raiseError by remember { mutableStateOf(false) }
 
     val sheetState = rememberModalBottomSheetState( skipPartiallyExpanded = true )
 
-    fun tryLogin() {
-        if (checkTempLogin(user, password)) {
-            mainNav.navigate("campsites") {
-                popUpTo("start") { inclusive = true }
-            }
-        } else {
-            loginError = "Incorrect username or password"
-        }
-    }
+    val context = LocalContext.current
+    val dId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
 
     Column (
-        modifier = Modifier.fillMaxSize().padding(55.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(55.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -147,68 +136,40 @@ fun LoginScreen(mainNav: NavController, localNav: NavController) {
             fontSize = 50.sp,
             lineHeight = 52.sp,
             color = Color.White,
-            modifier = Modifier.fillMaxWidth().padding(5.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(5.dp)
         )
         Spacer(modifier = Modifier.height(100.dp))
         Text(
             text = "Login to your Account",
             color = Color.White,
-            modifier = Modifier.fillMaxWidth().padding(bottom=15.dp)
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(bottom = 15.dp)
         )
-        OutlinedTextField(
-            value = user,
-            onValueChange = { user = it ; loginError = null},
-            label = { Text("Username / Email") },
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Email,
-                capitalization = KeyboardCapitalization.None,
-                imeAction = ImeAction.Next
-            ),
-            colors = TextFieldDefaults.colors(
-                unfocusedContainerColor = col.UnfocusedInputContainer,
-                focusedContainerColor = col.FocusedInputContainer,
-                focusedLabelColor = col.FocusedInputLabel,
-                ),
-            modifier = Modifier.fillMaxWidth().padding(bottom=10.dp)
-        )
-        OutlinedTextField(
-            value = shownPassword,
-            onValueChange = { newShown ->
-            password = if (newShown.length > password.length) {
-                password + newShown.substring(password.length)  // letters were added
-            } else {
-                password.take(newShown.length)                  // letters were deleted
-            }
-                shownPassword = "*".repeat(password.length)
-                loginError = null
-            },
-            label = { Text("Password") },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Password,
-                imeAction = ImeAction.Done
-            ),
-            keyboardActions = KeyboardActions(onDone = { tryLogin() }),
-            colors = TextFieldDefaults.colors(
-                unfocusedContainerColor = col.UnfocusedInputContainer,
-                focusedContainerColor = col.FocusedInputContainer,
-                focusedLabelColor = col.FocusedInputLabel,
-                ),
-            modifier = Modifier.fillMaxWidth().padding(bottom=10.dp)
-        )
-        loginError?.let {
+        if (raiseError) {
             Text(
-                text = it,
-                color = Color(0xFFFF8A80),
-                modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp)
+                text = "Your login was not found.\n" +
+                        "Please sign in instead.",
+                fontSize = 15.sp,
+                color = Color.Red
             )
+            Spacer(modifier = Modifier.height(5.dp))
         }
         Button (
-            onClick = { tryLogin() },
+            onClick = { handleLogin ( dId, { success ->
+                if (success) {
+                    mainNav.navigate("campsites")
+                } else {
+                    raiseError = true
+                }
+            }) },
             colors = ButtonDefaults.buttonColors(
                 containerColor = col.SubmitButton
             ),
-            modifier = Modifier.fillMaxWidth().padding(horizontal=50.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 50.dp)
         ) {
             Text(
                 text = "✔ Login"
@@ -232,7 +193,9 @@ fun LoginScreen(mainNav: NavController, localNav: NavController) {
             onDismissRequest = { showSignUp = false },
             containerColor = col.BottomSheetBackground,
             sheetState = sheetState,
-            modifier = Modifier.padding(horizontal = 10.dp).padding(top = 80.dp)
+            modifier = Modifier
+                .padding(horizontal = 10.dp)
+                .padding(top = 120.dp)
         ) {
             SignUpScreen(mainNav)
         }
@@ -241,57 +204,41 @@ fun LoginScreen(mainNav: NavController, localNav: NavController) {
 
 @Composable
 fun SignUpScreen(mainNav: NavController) {
-    var username by remember { mutableStateOf("") }
-    var newPassword by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var phoneNumber by remember { mutableStateOf("") }
 
+    var errorMessage by remember { mutableStateOf("") }
+    var raiseError by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+    val dId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
 
     Column (
-        modifier = Modifier.fillMaxSize().padding(horizontal = 55.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 55.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
             text = "Create your account",
-            fontWeight = FontWeight(10),
-            color = Color.Black
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(25.dp))
         Spacer(modifier = Modifier.height(100.dp)) // |aN: placeholder space for an upload profile photo circle
         Spacer(modifier = Modifier.height(25.dp))
         OutlinedTextField(
-            value = username,
-            onValueChange = { username = it },
-            label = { Text("Username") },
+            value = name,
+            onValueChange = { name = it },
+            label = { Text("Name") },
             colors = TextFieldDefaults.colors(
                 unfocusedContainerColor = col.UnfocusedInputContainer,
                 focusedContainerColor = col.FocusedInputContainer,
-                focusedLabelColor = col.FocusedInputLabel,
             ),
-            modifier = Modifier.fillMaxWidth().padding(bottom=15.dp)
-        )
-        OutlinedTextField(
-            value = newPassword,
-            onValueChange = { newPassword = it },
-            label = { Text("New Password") },
-            colors = TextFieldDefaults.colors(
-                unfocusedContainerColor = col.UnfocusedInputContainer,
-                focusedContainerColor = col.FocusedInputContainer,
-                focusedLabelColor = col.FocusedInputLabel,
-            ),
-            modifier = Modifier.fillMaxWidth().padding(bottom=15.dp)
-        )
-        OutlinedTextField(
-            value = confirmPassword,
-            onValueChange = { confirmPassword = it },
-            label = { Text("Confirm Password") },
-            colors = TextFieldDefaults.colors(
-                unfocusedContainerColor = col.UnfocusedInputContainer,
-                focusedContainerColor = col.FocusedInputContainer,
-                focusedLabelColor = col.FocusedInputLabel,
-            ),
-            modifier = Modifier.fillMaxWidth().padding(bottom=15.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 15.dp)
         )
         OutlinedTextField(
             value = email,
@@ -300,9 +247,10 @@ fun SignUpScreen(mainNav: NavController) {
             colors = TextFieldDefaults.colors(
                 unfocusedContainerColor = col.UnfocusedInputContainer,
                 focusedContainerColor = col.FocusedInputContainer,
-                focusedLabelColor = col.FocusedInputLabel,
             ),
-            modifier = Modifier.fillMaxWidth().padding(bottom=15.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 15.dp)
         )
         OutlinedTextField(
             value = phoneNumber,
@@ -311,20 +259,131 @@ fun SignUpScreen(mainNav: NavController) {
             colors = TextFieldDefaults.colors(
                 unfocusedContainerColor = col.UnfocusedInputContainer,
                 focusedContainerColor = col.FocusedInputContainer,
-                focusedLabelColor = col.FocusedInputLabel,
             ),
-            modifier = Modifier.fillMaxWidth().padding(bottom=25.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 25.dp)
         )
+        if (raiseError) {
+            Text(
+                text = errorMessage,
+                fontSize = 15.sp,
+                color = Color.Red
+            )
+            Spacer(modifier = Modifier.height(5.dp))
+        }
+        Text(
+            text = "Sign up as:",
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(10.dp))
         Button (
-            onClick = { mainNav.navigate("home") },
+            onClick = { handleSignUp(name, email, phoneNumber, dId, "e", { exitCode ->
+                        if (exitCode == 0) {
+                            mainNav.navigate("home")
+                        } else if (exitCode == 1) {
+                            errorMessage = "Please fill all required fields."
+                            raiseError = true
+                        } else if (exitCode == 2) {
+                            errorMessage = "Existing account detected."
+                            raiseError = true
+                        }
+                    }) },
             colors = ButtonDefaults.buttonColors(
                 containerColor = col.SubmitButton
             ),
-            modifier = Modifier.fillMaxWidth().padding(horizontal=50.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 50.dp)
+                .padding(bottom = 5.dp)
         ) {
             Text(
-                text = "Sign Up"
+                text = "Entrant"
             )
+        }
+        Text("OR")
+        Spacer(modifier = Modifier.height(5.dp))
+        Button (
+            onClick = { handleSignUp(name, email, phoneNumber, dId, "c", { exitCode ->
+                        if (exitCode == 0) {
+                            mainNav.navigate("home")
+                        } else if (exitCode == 1) {
+                            errorMessage = "Please fill all required fields."
+                            raiseError = true
+                        } else if (exitCode == 2) {
+                            errorMessage = "Existing account detected."
+                            raiseError = true
+                        }
+            }) },
+            colors = ButtonDefaults.buttonColors(
+                containerColor = col.SubmitButton
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 50.dp)
+                .padding(bottom = 5.dp)
+        ) {
+            Text(
+                text = "Campsite Owner"
+            )
+        }
+    }
+}
+
+/**
+ * Processes user sign-up request
+ *
+ * This function creates a user, updates the values of the user to match the
+ * signup inputs, and then adds the role selected on the page to the user. This
+ * is done through passed functions as Firebase calls are asynchronous.
+ *
+ * @param name input field for mutation
+ * @param email input field for mutation
+ * @param phone input field for mutation
+ * @param deviceID input field for creation and query
+ * @param type input field for mutation
+ * @oaram onDone callback function to handle success levels
+ */
+fun handleSignUp(name: String, email: String, phone: String,
+                 deviceID: String, type: String, onDone : (Number) -> Unit) {
+    if (name == "" || email == "" || phone == "" || deviceID == "") {
+        onDone(1)
+        return
+    } // fail if fields are empty
+
+    // Ensure that the device doesn't already have an account
+    users.getUser(deviceID) { user ->
+        if (user != null) {
+            onDone(2)
+        } else {
+            var role: Role;
+            if (type == "e") role = Role.ENTRANT
+            else if (type == "c") role = Role.CAMP_OWNER
+            else role = Role.ENTRANT
+
+            // creates user, updates with values, and adds role
+            users.getOrCreateUser(deviceID, {
+                users.updateUser(deviceID, name, email, phone, null, { success ->
+                    if (!success) {
+                        onDone(1)
+                        return@updateUser
+                    }
+                    users.addRole(deviceID, role, { onDone(0) })
+                })
+            })
+        }
+    }
+}
+
+/**
+ *
+ */
+fun handleLogin( deviceID: String, onDone : (Boolean) -> Unit) {
+    users.getUser(deviceID) { user ->
+        if (user != null) {
+            onDone(true)
+        } else {
+            onDone(false)
         }
     }
 }
