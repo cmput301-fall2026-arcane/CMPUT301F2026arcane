@@ -41,6 +41,6 @@ fun ArcaneApp() {
         composable("campsite/{campsiteId}") { entry ->
             CampsiteScreen(mainNavCon, entry.arguments?.getString("campsiteId") ?: "")}
         composable("users") { AdminUserListScreen(mainNavCon, users) }
-        composable("adminCampsite") { AdminCampsiteListItem (mainNavCon, campsite) }
+        composable("adminCampsite") { AdminCampsiteListScreen(mainNavCon, sites) }
     }
 }

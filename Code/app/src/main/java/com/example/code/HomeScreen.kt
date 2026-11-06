@@ -126,7 +126,9 @@ fun HomeScreen(nav: NavController) {
 
             MenuButton(
                 label = "List of All Campsites",
-                onClick = {},
+                onClick = {
+                    nav.navigate("adminCampsite")
+                },
                 height = 75.dp,
                 modifier = Modifier.weight(1f)
             )

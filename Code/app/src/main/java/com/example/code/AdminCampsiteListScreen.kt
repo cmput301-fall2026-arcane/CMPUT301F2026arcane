@@ -51,23 +51,20 @@ data class AdminCampsiteListItem(
 )
 
 @Composable
-fun AdminCampsiteListScreen(mainNav: NavController, repo: UserRepository) {
+fun AdminCampsiteListScreen(mainNav: NavController, repo: CampsiteRepository) {
 
-    val users = remember {
-        mutableStateListOf<UserListItem>().also { list ->
-            repo.getAllUsers { result ->
-                result?.let { loaded -> list.addAll(loaded.map { UserListItem(it) }) }
-            }
-        }
+    remember { repo.listenToAll()
+        true
     }
-    var toDelete by remember { mutableStateOf<UserListItem?>(null) }
+
+    var toDelete by remember { mutableStateOf<Campsite?>(null) }
 
     Column(
         modifier = Modifier.fillMaxSize().systemBarsPadding().padding(bottom = 100.dp),
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "All Users",
+            text = "All Campsites",
             color = Color.White,
             fontSize = 36.sp,
             fontWeight = FontWeight.Bold
@@ -85,7 +82,7 @@ fun AdminCampsiteListScreen(mainNav: NavController, repo: UserRepository) {
             contentPadding = PaddingValues(bottom = 16.dp),
             modifier = Modifier.fillMaxSize()
         ) {
-            items(users) { item ->
+            items(repo.liveCampsites, key = {it.id}) { item ->
                 ACampsiteCard (
                     item = item,
                     onClick = {},
@@ -106,12 +103,10 @@ fun AdminCampsiteListScreen(mainNav: NavController, repo: UserRepository) {
         AlertDialog(
             onDismissRequest = { toDelete = null},
             title = { Text("Delete user?") },
-            text = { Text("Remove ${item.user.name}? This action cannot be undone.") },
+            text = { Text("Remove ${item.name}? This action cannot be undone.") },
             confirmButton = {
                 TextButton(onClick = {
-                    repo.deleteUser(item.user.deviceId) { success ->
-                        if (success) users.remove(item)
-                    }
+                    repo.deleteCampsite(item.id)
                     toDelete = null
                 }) { Text("Delete")}
             },
@@ -124,7 +119,7 @@ fun AdminCampsiteListScreen(mainNav: NavController, repo: UserRepository) {
 
 
 @Composable
-fun ACampsiteCard(item: UserListItem, onClick: () -> Unit, onDelete:() -> Unit) {
+fun ACampsiteCard(item: Campsite, onClick: () -> Unit, onDelete:() -> Unit) {
 
     Row(
         modifier = Modifier
@@ -136,7 +131,7 @@ fun ACampsiteCard(item: UserListItem, onClick: () -> Unit, onDelete:() -> Unit) 
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = item.user.name,
+            text = item.name,
             color = col.CardText,
             fontSize = 15.sp,
             maxLines = 1,
