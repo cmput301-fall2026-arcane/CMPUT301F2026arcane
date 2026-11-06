@@ -1,5 +1,6 @@
-package com.example.arcane
+package com.example.code
 
+import android.provider.Settings
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -29,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -38,6 +40,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.code.R
+import com.example.code.col
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.seconds
 
@@ -110,6 +113,9 @@ fun LoginScreen(mainNav: NavController, localNav: NavController) {
     var showSignUp by remember { mutableStateOf(false) }
 
     val sheetState = rememberModalBottomSheetState( skipPartiallyExpanded = true )
+
+    val context = LocalContext.current
+    val dId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
 
     Column (
         modifier = Modifier.fillMaxSize().padding(55.dp),

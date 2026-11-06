@@ -1,4 +1,4 @@
-package com.example.arcane
+package com.example.code
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -12,7 +12,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.code.R
 
 @Composable
 fun ArcaneApp() {
