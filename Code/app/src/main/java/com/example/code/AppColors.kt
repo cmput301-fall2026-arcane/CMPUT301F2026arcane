@@ -11,6 +11,10 @@ class AppColors {
     // Buttons
     val SubmitButton = Color(0xFF2D6837)
 
+    // Home Screen Buttons/Texts
+    val HomeButton = Color(0xFF8FB996)
+    val HomeButtonText = Color(0xFF1F2D24)
+
     // Modal Bottom Sheet
     val BottomSheetBackground = Color(0xFF86A98C)
 }
