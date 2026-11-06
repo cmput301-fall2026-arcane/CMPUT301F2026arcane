@@ -95,7 +95,7 @@ class UserRepository (db: FirebaseFirestore = FirebaseFirestore.getInstance()){
     fun deleteUser(deviceId: String,
                    onDone: (Boolean) -> Unit) {
         if (deviceId.isEmpty()) {
-            // TODO: Passback status
+            onDone(false)
             return
         }
         usersRef.document(deviceId)
@@ -137,18 +137,14 @@ class UserRepository (db: FirebaseFirestore = FirebaseFirestore.getInstance()){
      *
      * @return a List of all users
      */
-    fun getAllUsers(): List<User> {
-        var users = mutableListOf<User>()
+    fun getAllUsers(onDone: (List<User>?) -> Unit) {
         usersRef.get()
-            .addOnSuccessListener { documents ->
-                for (document in documents) {
-                    users.add(document.toObject<User>())
-                }
+            .addOnSuccessListener { snapshot ->
+                onDone(snapshot.documents.mapNotNull { it.toObject<User>() })
             }
-            .addOnFailureListener { e ->
-                // TODO: Passback status
+            .addOnFailureListener {
+                onDone(null)
             }
-        return users
     }
 
     /**

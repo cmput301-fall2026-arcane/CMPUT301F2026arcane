@@ -38,6 +38,6 @@ fun ArcaneApp() {
         composable("adminHome") { HomeScreen(mainNavCon) }
         composable("campsites") { UserCampsiteListScreen(mainNavCon) }
         composable("profile") { ProfileScreen(mainNavCon) }
-        composable("users") { AdminUserListScreen(mainNavCon, sampleUsers) }
+        composable("users") { AdminUserListScreen(mainNavCon, users) }
     }
 }
