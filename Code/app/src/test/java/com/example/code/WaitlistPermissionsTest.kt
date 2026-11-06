@@ -106,4 +106,19 @@ class WaitlistPermissionsTest {
     fun entryIdIsDifferentPerEntrant() {
         assertNotEquals(entryId("lottery-1", "device-1"), entryId("lottery-1", "device-2"))
     }
+
+    @Test
+    fun canLeaveWaitlistWhenJoinedBeforeTheDraw() {
+        assertTrue(canLeaveWaitlist(true, false))
+    }
+
+    @Test
+    fun cannotLeaveWaitlistWhenNotJoined() {
+        assertFalse(canLeaveWaitlist(false, false))
+    }
+
+    @Test
+    fun cannotLeaveWaitlistAfterTheDraw() {
+        assertFalse(canLeaveWaitlist(true, true))
+    }
 }
