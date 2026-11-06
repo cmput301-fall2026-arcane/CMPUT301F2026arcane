@@ -1,5 +1,6 @@
 package com.example.code
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -48,7 +49,9 @@ class CampsiteRepository (db: FirebaseFirestore = FirebaseFirestore.getInstance(
                 // runCatching skips a document with a badly typed field instead of crashing,
                 // and copy(id = ...) fills the id in for documents added by hand in the console
                 .mapNotNull { doc ->
-                    runCatching { doc.toObject(Campsite::class.java) }.getOrNull()?.copy(id = doc.id)
+                    runCatching { doc.toObject(Campsite::class.java) }
+                        .onFailure { Log.e("CampsiteRepository", "Skipped campsite ${doc.id}", it) }
+                        .getOrNull()?.copy(id = doc.id)
                 }
                 .sortedBy { it.name }
             _allCampsites.clear()

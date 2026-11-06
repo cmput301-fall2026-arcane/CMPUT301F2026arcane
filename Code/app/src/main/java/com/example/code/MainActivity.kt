@@ -34,6 +34,7 @@ class MainActivity : ComponentActivity() {
         users = UserRepository(db)
         sites = CampsiteRepository(db)
 
+
         enableEdgeToEdge()
         setContent {
             CodeTheme {

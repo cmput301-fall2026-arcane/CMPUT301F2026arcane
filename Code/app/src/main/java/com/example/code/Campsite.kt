@@ -40,6 +40,7 @@ data class Campsite (
     val imageUrl: String = "",
     val latitude: Double = 0.0,
     val longitude: Double = 0.0,
+)
     val imagePath: String = "",
     val tags: MutableList<String> = mutableListOf<String>(),
     val createdAt: Long = 0L

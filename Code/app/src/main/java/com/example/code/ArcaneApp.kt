@@ -42,6 +42,11 @@ fun ArcaneApp() {
             CampsiteScreen(mainNavCon, entry.arguments?.getString("campsiteId") ?: "")}
         composable("users") { AdminUserListScreen(mainNavCon, users) }
         composable("adminCampsite") { AdminCampsiteListScreen(mainNavCon, sites) }
+        composable("myLotteries") { MyLotteriesScreen(mainNavCon) }
+        composable("reservations") { ReservationsScreen(mainNavCon) }
+        composable("reservation/{reservationId}") { entry ->
+            ReservationDetailScreen(mainNavCon, entry.arguments?.getString("reservationId") ?: "")
+        }
     }
 }
 
