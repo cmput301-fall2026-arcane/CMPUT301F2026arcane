@@ -68,16 +68,16 @@ fun filterCampsites(items: List<CampsiteListItem>, query: String): List<Campsite
 
 @Composable
 fun UserCampsiteListScreen(mainNav: NavController) {
-    val repo = remember { CampsiteRepository() }
+
     var search by remember { mutableStateOf("") }
 
     DisposableEffect(Unit){
-        repo.listenToAll()
-        onDispose { repo.stopListening() }
+        sites.listenToAll()
+        onDispose { sites.stopListening() }
     }
 
     // TODO: load from CampsiteRepository instead of the sample list
-    val shown = filterCampsites(repo.liveCampsites.map {CampsiteListItem(it)}, search)
+    val shown = filterCampsites(sites.liveCampsites.map {CampsiteListItem(it)}, search)
 
     Scaffold(
         containerColor = Color.Transparent, // let the ArcaneApp background image show through
