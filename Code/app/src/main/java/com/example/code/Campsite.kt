@@ -18,6 +18,7 @@ Not everything has been modeled yet
  * @property amenities  list of amenities available
  * @property description  details about the campsite
  * @property createdAt  creation time
+ * @property imageUrl path to image
  */
 data class Campsite (
     val id: String = "",
@@ -28,5 +29,6 @@ data class Campsite (
     val pricePerNight: Double = 0.0,
     val amenities: MutableList<String> = mutableListOf<String>(),
     val description: String = "",
-    val createdAt: Long = 0L
+    val createdAt: Long = 0L,
+    val imageUrl: String = ""
 )

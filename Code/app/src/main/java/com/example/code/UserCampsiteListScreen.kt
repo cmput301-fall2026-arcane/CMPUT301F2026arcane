@@ -27,6 +27,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,13 +46,13 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.code.R
 
-private val sampleCampsites = listOf(
-    CampsiteListItem(Campsite(id = "sample1", name = "Banff-ish Park", location = "Banff"), true),
-    CampsiteListItem(Campsite(id = "sample2", name = "Jasper'd Park", location = "Jasper"), false),
-    CampsiteListItem(Campsite(id = "sample3", name = "Pine Hollow", location = "Canmore"), true),
-    CampsiteListItem(Campsite(id = "sample4", name = "Redhorse Creek", location = "Kananaskis"), true),
-    CampsiteListItem(Campsite(id = "sample5", name = "Fairprint Lake", location = "Fairprint"), false)
-)
+//private val sampleCampsites = listOf(
+//    CampsiteListItem(Campsite(id = "sample1", name = "Banff-ish Park", location = "Banff"), true),
+//    CampsiteListItem(Campsite(id = "sample2", name = "Jasper'd Park", location = "Jasper"), false),
+//    CampsiteListItem(Campsite(id = "sample3", name = "Pine Hollow", location = "Canmore"), true),
+//    CampsiteListItem(Campsite(id = "sample4", name = "Redhorse Creek", location = "Kananaskis"), true),
+//    CampsiteListItem(Campsite(id = "sample5", name = "Fairprint Lake", location = "Fairprint"), false)
+//)
 data class CampsiteListItem(
     val campsite: Campsite,
     val lotteryOpen: Boolean = true
@@ -67,10 +68,16 @@ fun filterCampsites(items: List<CampsiteListItem>, query: String): List<Campsite
 
 @Composable
 fun UserCampsiteListScreen(mainNav: NavController) {
+    val repo = remember { CampsiteRepository() }
     var search by remember { mutableStateOf("") }
 
+    DisposableEffect(Unit){
+        repo.listenToAll()
+        onDispose { repo.stopListening() }
+    }
+
     // TODO: load from CampsiteRepository instead of the sample list
-    val shown = filterCampsites(sampleCampsites, search)
+    val shown = filterCampsites(repo.liveCampsites.map {CampsiteListItem(it)}, search)
 
     Scaffold(
         containerColor = Color.Transparent, // let the ArcaneApp background image show through
@@ -128,7 +135,7 @@ fun UserCampsiteListScreen(mainNav: NavController) {
                     CampsiteCard(
                         item = item,
                         onClick = {
-                            //TODO: campsite card
+                            mainNav.navigate("campsite/${item.campsite.id}")
                         }
                     )
                 }

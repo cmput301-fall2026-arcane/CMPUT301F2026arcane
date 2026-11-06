@@ -75,7 +75,7 @@ fun EntrantHomeScreen(nav: NavController) {
 
         MenuButton(
             label = "Book a Campsite",
-            onClick = {},
+            onClick = { nav.navigate("campsites") },
             height = 150.dp,
             modifier = Modifier.fillMaxWidth()
         )
@@ -88,7 +88,7 @@ fun EntrantHomeScreen(nav: NavController) {
         ) {
             MenuButton(
                 label = "View My Reservations",
-                onClick = {},
+                onClick = { nav.navigate("campsites") },
                 height = 75.dp,
                 modifier = Modifier.weight(1f)
             )

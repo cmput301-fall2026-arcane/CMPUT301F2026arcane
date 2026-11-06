@@ -1,6 +1,9 @@
 package com.example.code
 
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.toObject
@@ -23,6 +26,57 @@ class CampsiteRepository (db: FirebaseFirestore = FirebaseFirestore.getInstance(
     private var listener: ListenerRegistration? = null
 
     val myCampsites: List<Campsite> get() = _myCampsites
+
+    private val _allCampsites = mutableStateListOf<Campsite>()
+    private var allListener: ListenerRegistration? = null
+
+
+    val liveCampsites: List<Campsite> get() = _allCampsites
+
+    //Error Messages
+    var allCampsitesLoaded by mutableStateOf(false)
+        private set
+
+    fun listenToAll() {
+        allListener?.remove()
+        allListener = campsitesRef.addSnapshotListener { snapshot, error ->
+            if (error != null || snapshot == null) {
+                allCampsitesLoaded = true
+                return@addSnapshotListener
+            }
+            val campsites = snapshot.documents
+                // runCatching skips a document with a badly typed field instead of crashing,
+                // and copy(id = ...) fills the id in for documents added by hand in the console
+                .mapNotNull { doc ->
+                    runCatching { doc.toObject(Campsite::class.java) }.getOrNull()?.copy(id = doc.id)
+                }
+                .sortedBy { it.name }
+            _allCampsites.clear()
+            _allCampsites.addAll(campsites)
+            allCampsitesLoaded = true
+        }
+    }
+
+    fun stopListening() {
+        listener?.remove()
+        listener = null
+        allListener?.remove()
+        allListener = null
+    }
+
+    //Campsite Details
+    fun loadCampsite(id: String, onDone: (Campsite?) -> Unit, onError: (Exception) -> Unit = {}) {
+        if (id.isEmpty()) {
+            onDone(null)
+            return
+        }
+        campsitesRef.document(id).get()
+            .addOnSuccessListener { doc ->
+                val campsite = runCatching { doc.toObject(Campsite::class.java) }.getOrNull()
+                onDone(campsite?.copy(id = doc.id))
+            }
+            .addOnFailureListener { e -> onError(e) }
+    }
 
     /**
      * Starts a live listener on the campsites whose ownerId matches
@@ -174,4 +228,6 @@ class CampsiteRepository (db: FirebaseFirestore = FirebaseFirestore.getInstance(
             }
         return campsites
     }
+
+
 }
