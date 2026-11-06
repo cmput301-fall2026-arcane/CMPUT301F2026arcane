@@ -8,6 +8,7 @@ import kotlinx.coroutines.tasks.await
 /* US 02.09.01 As a campsite owner, I want to view a list of entrants who have joined the waitlist
 for my campsite lottery
 US 01.02.01 As an entrant, I want to join the waiting list for a campsite lottery
+US 01.02.02 As an entrant, I want to leave the waiting list for a campsite lottery
 
 Reads and writes the "waitlist" collection and keeps a live list of the entries for one lottery.
 The list is Compose state so the UI redraws as entrants join or leave. Each entry is stored under
@@ -23,6 +24,16 @@ sealed class JoinResult {
     object RegistrationClosed : JoinResult()
     object WaitlistFull : JoinResult()
     data class Failure(val message: String) : JoinResult()
+}
+
+/**
+ * The outcome of an entrant leaving a waitlist
+ */
+sealed class LeaveResult {
+    object Success : LeaveResult()
+    object NotOnWaitlist : LeaveResult()
+    object DrawCompleted : LeaveResult()
+    data class Failure(val message: String) : LeaveResult()
 }
 
 
@@ -116,6 +127,62 @@ class CampsiteWaitlist (
     }
 
     /**
+     * Checks if an entrant is on the waitlist of a lottery. The screen uses this to show
+     * either join or leave waitlist
+     *
+     * @param entrant the entrant
+     * @param lotteryId id of the lottery
+     * @param onResult called with true if the entrant is on the waitlist
+     */
+    fun isOnWaitlist(entrant: User, lotteryId: String, onResult: (Boolean) -> Unit) {
+        waitlistRef.document(entryId(lotteryId, entrant.deviceId)).get()
+            .addOnSuccessListener { onResult(it.exists()) }
+            .addOnFailureListener { onResult(false) }
+    }
+
+    /**
+     * Removes an entrant from the waitlist of a lottery and the screen asks them to confirm first
+     * only calling this if they do. Not allowed to leave once the draw is completed
+     *
+     * @param entrant the entrant leaving
+     * @param lotteryId id of the lottery they are leaving
+     * @param drawCompleted true if the winners have already been drawn
+     * @param onResult called with the outcome
+     */
+    fun leaveWaitlist(
+        entrant: User,
+        lotteryId: String,
+        drawCompleted: Boolean,
+        onResult: (LeaveResult) -> Unit
+    ) {
+        if (entrant.deviceId.isEmpty() || lotteryId.isEmpty()) {
+            onResult(LeaveResult.Failure("Missing entrant or lottery"))
+            return
+        }
+        if (drawCompleted) {
+            onResult(LeaveResult.DrawCompleted)
+            return
+        }
+
+        val doc = waitlistRef.document(entryId(lotteryId, entrant.deviceId))
+        doc.get()
+            .addOnSuccessListener { existing ->
+                if (!existing.exists()) {
+                    onResult(LeaveResult.NotOnWaitlist)
+                    return@addOnSuccessListener
+                }
+                doc.delete()
+                    .addOnSuccessListener { onResult(LeaveResult.Success) }
+                    .addOnFailureListener { e ->
+                        onResult(LeaveResult.Failure(e.message ?: "Could not leave the waitlist"))
+                    }
+            }
+            .addOnFailureListener { e ->
+                onResult(LeaveResult.Failure(e.message ?: "Could not leave the waitlist"))
+            }
+    }
+
+    /**
      * Loads every waitlist the entrant has joined, newest first
      *
      * @param deviceId device id of the entrant
@@ -166,4 +233,20 @@ class CampsiteWaitlist (
                 // TODO: Passback status
             }
     }
+
+
 }
+
+/**
+ * Checks whether an entrant can leave a waitlist. They must be in the waitlist and once the draw is
+ * completed they cannot leave
+ *
+ * @param joined true if the entrant is on the waitlist
+ * @param drawCompleted true if the winners have already been drawn
+ * @return true if leaving is allowed
+ */
+fun canLeaveWaitlist(joined: Boolean, drawCompleted: Boolean): Boolean {
+    return joined && !drawCompleted
+}
+
+
