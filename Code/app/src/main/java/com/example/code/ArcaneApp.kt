@@ -1,4 +1,4 @@
-package com.example.arcane
+package com.example.code
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -33,6 +33,7 @@ fun ArcaneApp() {
 
     NavHost(navController = mainNavCon, startDestination = "start") {
         composable("start") { StartScreens(mainNavCon) }
-        composable("home") { HomeScreen(mainNavCon) }
+        composable("home") { HomeScreen(mainNavCon)}
+        composable("campsites") { UserCampsiteListScreen(mainNavCon) }
     }
 }
