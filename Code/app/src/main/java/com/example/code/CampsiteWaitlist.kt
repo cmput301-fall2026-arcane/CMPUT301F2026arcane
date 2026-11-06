@@ -3,6 +3,7 @@ package com.example.code
 import androidx.compose.runtime.mutableStateListOf
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import kotlinx.coroutines.tasks.await
 
 /* US 02.09.01 As a campsite owner, I want to view a list of entrants who have joined the waitlist
 for my campsite lottery
@@ -27,7 +28,7 @@ sealed class JoinResult {
 
 class CampsiteWaitlist (
     val capacity: Int = 0,
-    db: FirebaseFirestore = FirebaseFirestore.getInstance()
+    val db: FirebaseFirestore = FirebaseFirestore.getInstance()
 ) {
     private val waitlistRef = db.collection("waitlist")
     private val _entries = mutableStateListOf<WaitlistEntry>()
@@ -135,5 +136,34 @@ class CampsiteWaitlist (
                 onDone(joined)
             }
             .addOnFailureListener { e -> onError(e) }
+    }
+
+    suspend fun getEntriesForLottery(lotteryId: String): List<WaitlistEntry> {
+        val snapshot = waitlistRef.whereEqualTo("lotteryId", lotteryId).get().await()
+        return snapshot.documents.mapNotNull { it.toObject(WaitlistEntry::class.java) }
+    }
+
+    fun createLottery(
+        campsiteIds: List<String>,
+        numWinners: Int,
+        openDate: Long,
+        closeDate: Long,
+    ) {
+        val lotteriesRef = db.collection("lotteries")
+
+        val lottery = Lottery(
+            campsites = campsiteIds,
+            numWinners = numWinners,
+            openDate = openDate,
+            closeDate = closeDate,
+        )
+
+        lotteriesRef.add(lottery)
+            .addOnSuccessListener { documentReference ->
+                // TODO: Passback status
+            }
+            .addOnFailureListener { e ->
+                // TODO: Passback status
+            }
     }
 }
