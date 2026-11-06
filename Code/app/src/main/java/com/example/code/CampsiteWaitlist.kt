@@ -236,3 +236,17 @@ class CampsiteWaitlist (
 
 
 }
+
+/**
+ * Checks whether an entrant can leave a waitlist. They must be in the waitlist and once the draw is
+ * completed they cannot leave
+ *
+ * @param joined true if the entrant is on the waitlist
+ * @param drawCompleted true if the winners have already been drawn
+ * @return true if leaving is allowed
+ */
+fun canLeaveWaitlist(joined: Boolean, drawCompleted: Boolean): Boolean {
+    return joined && !drawCompleted
+}
+
+
