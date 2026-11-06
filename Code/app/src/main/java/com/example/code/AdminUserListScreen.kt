@@ -19,8 +19,18 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,33 +46,24 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 
-val sampleUsers = listOf(
-    UserListItem(User(name = "Banff-ish Park", email = "dfjdkjf")),
-    UserListItem(User(name = "Jasper'd Park", email = "adsadsad")),
-    UserListItem(User(name = "Pine Hollow", email = "dfsfsdfs")),
-    UserListItem(User(name = "Redhorse Creek", email = "sdfdsfs")),
-    UserListItem(User(name = "Fairprint Lake", email = "sdfsdfsdf")),
-    UserListItem(User(name = "Banff-ish Park", email = "dfjdkjf")),
-    UserListItem(User(name = "Jasper'd Park", email = "adsadsad")),
-    UserListItem(User(name = "Pine Hollow", email = "dfsfsdfs")),
-    UserListItem(User(name = "Redhorse Creek", email = "sdfdsfs")),
-    UserListItem(User(name = "Fairprint Lake", email = "sdfsdfsdf")),
-    UserListItem(User(name = "Banff-ish Park", email = "dfjdkjf")),
-    UserListItem(User(name = "Jasper'd Park", email = "adsadsad")),
-    UserListItem(User(name = "Pine Hollow", email = "dfsfsdfs")),
-    UserListItem(User(name = "Redhorse Creek", email = "sdfdsfs")),
-    UserListItem(User(name = "Fairprint Lake", email = "sdfsdfsdf"))
-)
-
 data class UserListItem(
     val user: User
 )
 
 @Composable
-fun AdminUserListScreen(mainNav: NavController, shown: List<UserListItem>) {
+fun AdminUserListScreen(mainNav: NavController, repo: UserRepository) {
+
+    val users = remember {
+        mutableStateListOf<UserListItem>().also { list ->
+            repo.getAllUsers { result ->
+                result?.let { loaded -> list.addAll(loaded.map { UserListItem(it) }) }
+            }
+        }
+    }
+    var toDelete by remember { mutableStateOf<UserListItem?>(null) }
 
     Column(
-        modifier = Modifier.fillMaxSize().systemBarsPadding().padding(16.dp),
+        modifier = Modifier.fillMaxSize().systemBarsPadding().padding(bottom = 100.dp),
         verticalArrangement = Arrangement.Center
     ) {
         Text(
@@ -84,15 +85,14 @@ fun AdminUserListScreen(mainNav: NavController, shown: List<UserListItem>) {
             contentPadding = PaddingValues(bottom = 16.dp),
             modifier = Modifier.fillMaxSize()
         ) {
-            items(shown) { item ->
+            items(users) { item ->
                 UserCard (
                     item = item,
-                    onClick = {
-                    }
+                    onClick = {},
+                    onDelete = { toDelete = item }
                 )
             }
         }
-        Spacer(modifier = Modifier.height(150.dp))
     }
 
     Column(
@@ -101,11 +101,30 @@ fun AdminUserListScreen(mainNav: NavController, shown: List<UserListItem>) {
     ) {
         BottomNavBar("users", mainNav)
     }
+
+    toDelete?.let { item ->
+        AlertDialog(
+            onDismissRequest = { toDelete = null},
+            title = { Text("Delete user?") },
+            text = { Text("Remove ${item.user.name}? This action cannot be undone.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    repo.deleteUser(item.user.deviceId) { success ->
+                        if (success) users.remove(item)
+                    }
+                    toDelete = null
+                }) { Text("Delete")}
+            },
+            dismissButton = {
+                TextButton(onClick = {toDelete = null}) {Text("Cancel") }
+            }
+        )
+    }
 }
 
 
 @Composable
-fun UserCard(item: UserListItem, onClick: () -> Unit) {
+fun UserCard(item: UserListItem, onClick: () -> Unit, onDelete:() -> Unit) {
 
     Row(
         modifier = Modifier
@@ -137,12 +156,15 @@ fun UserCard(item: UserListItem, onClick: () -> Unit) {
                     .width(32.dp)
                     .background(Brush.horizontalGradient(listOf(col.UserCard, Color.Transparent)))
             )
+            IconButton(                                   // NEW
+                onClick = onDelete,
+                modifier = Modifier.align(Alignment.CenterEnd)
+            ) {
+                Text(
+                    text = "🗑️",
+                    fontSize = 22.sp
+                )
+            }
         }
     }
-}
-
-@Preview(showBackground = true, backgroundColor = 0xFF333333, showSystemUi = true)
-@Composable
-fun AdminUserListScreenPreview() {
-    AdminUserListScreen(rememberNavController(), sampleUsers)
 }
