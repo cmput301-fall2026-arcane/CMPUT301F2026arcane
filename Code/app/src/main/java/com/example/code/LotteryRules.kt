@@ -7,19 +7,6 @@ Checks for the draw. No Firestore calls so they can be unit tested
 */
 
 /**
- * Checks whether a lottery is ready to be drawn. Called whenever a lottery is shown so the draw
- * happens on its own once the sign up period has closed
- *
- * @param now the current time
- * @param closeDate the time the sign up period closes
- * @param isDrawn true if the lottery has already been drawn
- * @return true if the draw should run
- */
-fun isDrawDue(now: Long, closeDate: Long, isDrawn: Boolean): Boolean {
-    return !isDrawn && now >= closeDate
-}
-
-/**
  * Builds a result for every entrant, marking the ones that were drawn as winners
  *
  * @param lotteryId id of the lottery that was drawn
