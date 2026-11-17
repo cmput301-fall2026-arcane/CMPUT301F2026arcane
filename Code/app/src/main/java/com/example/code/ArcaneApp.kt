@@ -51,6 +51,9 @@ fun ArcaneApp() {
         composable("ownerTools/{campsiteId}") { entry ->
             OwnerToolsScreen(mainNavCon, entry.arguments?.getString("campsiteId") ?: "")
         }
+        composable("ownerWaitlist/{campsiteId}") { entry ->
+            OwnerWaitlistScreen(mainNavCon, entry.arguments?.getString("campsiteId") ?: "")
+        }
     }
 }
 

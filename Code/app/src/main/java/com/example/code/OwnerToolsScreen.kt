@@ -115,6 +115,12 @@ fun OwnerToolsScreen(nav: NavController, campsiteId: String) {
                     height = 75.dp,
                     modifier = Modifier.weight(1f)
                 )
+                MenuButton(
+                    label = "Current Waitlist",
+                    onClick = { nav.navigate("ownerWaitlist/$campsiteId") },
+                    height = 75.dp,
+                    modifier = Modifier.weight(1f)
+                )
             }
 
             Spacer(Modifier.height(12.dp))
