@@ -35,6 +35,9 @@ fun OwnerWaitlistScreen(nav: NavController, campsiteId: String) {
     val waitlist = remember { CampsiteWaitlist() }
     var hasLottery by remember { mutableStateOf(true) }
     var capacity by remember { mutableStateOf(0) }
+    val draw = remember { LotteryDraw() }
+    var winnerIds by remember { mutableStateOf(setOf<String>()) }
+    var closed by remember { mutableStateOf(false) }
     val dateFormat = remember { SimpleDateFormat("MMM d, yyyy", Locale.getDefault()) }
 
     // find the newest lottery for this campsite, then listen to its waitlist
@@ -46,7 +49,12 @@ fun OwnerWaitlistScreen(nav: NavController, campsiteId: String) {
             hasLottery = false
         } else {
             capacity = lottery.capacity
+            closed = System.currentTimeMillis() >= lottery.closeDate
             waitlist.listenToLottery(lottery.id)
+            winnerIds = runCatching { draw.getWinners(lottery.id) }
+                .getOrDefault(emptyList())
+                .map { it.deviceId }
+                .toSet()
         }
     }
 
@@ -65,7 +73,8 @@ fun OwnerWaitlistScreen(nav: NavController, campsiteId: String) {
                 Text(countText, color = Color.White, modifier = Modifier.padding(top = 8.dp))
 
                 if (waitlist.entries.isEmpty()) {
-                    Text("No one has joined the waitlist yet", color = Color.White, modifier = Modifier.padding(top = 16.dp))
+                    val emptyText = if (closed) "Registration closed. No one entered, so no winners were drawn" else "No one has joined the waitlist yet"
+                    Text(emptyText, color = Color.White, modifier = Modifier.padding(top = 16.dp))
                 }
 
                 LazyColumn(
@@ -81,6 +90,9 @@ fun OwnerWaitlistScreen(nav: NavController, campsiteId: String) {
                             Column(modifier = Modifier.padding(16.dp)) {
                                 Text(entry.name, color = col.HomeButtonText, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                                 Text("Joined ${dateFormat.format(Date(entry.joinedAt))}", color = col.HomeButtonText)
+                                if (entry.deviceId in winnerIds) {
+                                    Text("WINNER", color = col.HomeButtonText, fontWeight = FontWeight.Bold)
+                                }
                             }
                         }
                     }
