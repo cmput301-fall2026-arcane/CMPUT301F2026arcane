@@ -48,6 +48,9 @@ fun ArcaneApp() {
             ReservationDetailScreen(mainNavCon, entry.arguments?.getString("reservationId") ?: "")
         }
         composable("ownerCampsites") { CampsiteOwnerListPage(mainNavCon) }
+        composable("ownerTools/{campsiteId}") { entry ->
+            OwnerToolsScreen(mainNavCon, entry.arguments?.getString("campsiteId") ?: "")
+        }
     }
 }
 

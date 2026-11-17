@@ -50,7 +50,7 @@ fun CampsiteOwnerListPage(nav: NavController) {
             ) {
                 items(repo.myCampsites) { campsite ->
                     Card(
-                        onClick = {},
+                        onClick = { nav.navigate("ownerTools/${campsite.id}") },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(containerColor = col.HomeButton)
