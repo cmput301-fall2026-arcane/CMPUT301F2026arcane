@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import androidx.compose.runtime.LaunchedEffect
 
 /**
  * Creates a menu button which contains the same format for all for consistency
@@ -72,8 +73,14 @@ private fun MenuButton(label: String, onClick: () -> Unit, height: Dp, modifier:
     }
 }
 @Composable
-fun OwnerToolsScreen(nav: NavController, campsiteName: String) {
+fun OwnerToolsScreen(nav: NavController, campsiteId: String) {
     var selected by remember { mutableStateOf("home") }
+    val repo = remember { CampsiteRepository() }
+    var campsiteName by remember { mutableStateOf("") }
+
+    LaunchedEffect(campsiteId) {
+        repo.loadCampsite(campsiteId, { campsite -> campsiteName = campsite?.name ?: "" })
+    }
 
     Column(                                                       // 2. NEW outer column
         modifier = Modifier.fillMaxSize().statusBarsPadding()     //    (statusBarsPadding, not systemBarsPadding)
@@ -105,6 +112,12 @@ fun OwnerToolsScreen(nav: NavController, campsiteName: String) {
                 MenuButton(
                     label = "Current Lottery List",
                     onClick = {},
+                    height = 75.dp,
+                    modifier = Modifier.weight(1f)
+                )
+                MenuButton(
+                    label = "Current Waitlist",
+                    onClick = { nav.navigate("ownerWaitlist/$campsiteId") },
                     height = 75.dp,
                     modifier = Modifier.weight(1f)
                 )
@@ -159,7 +172,7 @@ fun OwnerToolsScreen(nav: NavController, campsiteName: String) {
 fun CampsiteToolsScreenPreview() {
     OwnerToolsScreen(
         nav = rememberNavController(),
-        campsiteName = "Pineapple's Backyard"
+        campsiteId = ""
     )
 }
 
