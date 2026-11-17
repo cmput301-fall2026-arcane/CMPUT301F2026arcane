@@ -34,6 +34,7 @@ fun OwnerWaitlistScreen(nav: NavController, campsiteId: String) {
     val lotteries = remember { LotteryRepository() }
     val waitlist = remember { CampsiteWaitlist() }
     var hasLottery by remember { mutableStateOf(true) }
+    var capacity by remember { mutableStateOf(0) }
     val dateFormat = remember { SimpleDateFormat("MMM d, yyyy", Locale.getDefault()) }
 
     // find the newest lottery for this campsite, then listen to its waitlist
@@ -44,6 +45,7 @@ fun OwnerWaitlistScreen(nav: NavController, campsiteId: String) {
         if (lottery == null) {
             hasLottery = false
         } else {
+            capacity = lottery.capacity
             waitlist.listenToLottery(lottery.id)
         }
     }
@@ -59,7 +61,8 @@ fun OwnerWaitlistScreen(nav: NavController, campsiteId: String) {
             if (!hasLottery) {
                 Text("This campsite has no lottery", color = Color.White, modifier = Modifier.padding(top = 16.dp))
             } else {
-                Text("${waitlist.entries.size} entrants", color = Color.White, modifier = Modifier.padding(top = 8.dp))
+                val countText = if (capacity > 0) "${waitlist.entries.size} / $capacity entrants" else "${waitlist.entries.size} entrants"
+                Text(countText, color = Color.White, modifier = Modifier.padding(top = 8.dp))
 
                 if (waitlist.entries.isEmpty()) {
                     Text("No one has joined the waitlist yet", color = Color.White, modifier = Modifier.padding(top = 16.dp))
