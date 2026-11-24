@@ -22,6 +22,8 @@ data class Lottery(
     val closeDate: Long = System.currentTimeMillis() + 24 * 60 * 60 * 1000,
     val bookingOpenDate: Long = 0L,
     val bookingCloseDate: Long = 0L,
+    val capacity: Int = 0,
+
 ) {
     val createdAt: Long = System.currentTimeMillis()
     val winners: List<String> = emptyList()

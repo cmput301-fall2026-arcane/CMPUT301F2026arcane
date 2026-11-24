@@ -104,7 +104,7 @@ fun OwnerHomeScreen(nav: NavController) {
 
         MenuButton(
             label = "Manage My Campsites",
-            onClick = {},
+            onClick = {nav.navigate("ownerCampsites")},
             height = 100.dp,
             modifier = Modifier.fillMaxWidth()
         )
