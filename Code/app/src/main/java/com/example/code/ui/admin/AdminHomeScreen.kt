@@ -1,4 +1,4 @@
-package com.example.code.ui.start
+package com.example.code.ui.admin
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box

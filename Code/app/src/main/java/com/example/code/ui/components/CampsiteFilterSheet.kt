@@ -37,9 +37,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.code.ui.navigation.CampsiteFilters
+import com.example.code.rules.CampsiteFilters
 import com.example.code.col
-import com.example.code.ui.navigation.todayUtcMillis
+import com.example.code.rules.todayUtcMillis
 
 private const val MAX_GUESTS = 50
 

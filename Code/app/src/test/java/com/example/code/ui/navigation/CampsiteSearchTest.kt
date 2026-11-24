@@ -1,6 +1,7 @@
 package com.example.code.ui.navigation
 
 import com.example.code.model.Campsite
+import com.example.code.rules.filterCampsites
 import com.example.code.ui.entrant.CampsiteListItem
 import org.junit.Assert
 import org.junit.Test

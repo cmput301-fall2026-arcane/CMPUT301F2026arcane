@@ -52,9 +52,9 @@ import com.example.code.model.Reservation
 import com.example.code.repositories.CampsiteRepository
 import com.example.code.repositories.ReservationRepository
 import com.example.code.rules.isReservationActive
-import com.example.code.ui.navigation.todayUtcMillis
+import com.example.code.rules.todayUtcMillis
 import com.example.code.ui.navigation.BottomNavBar
-import com.example.code.ui.navigation.formatDateRange
+import com.example.code.rules.formatDateRange
 import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
 

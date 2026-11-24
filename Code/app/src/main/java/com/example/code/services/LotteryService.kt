@@ -2,6 +2,7 @@ package com.example.code.services
 
 import com.example.code.model.Lottery
 import com.example.code.model.WaitlistEntry
+import com.example.code.rules.drawWinners
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import kotlin.random.Random
@@ -11,33 +12,11 @@ import kotlin.random.Random
  *
  * @param db the Firestore instance to use
  */
-class LotterySystem(
+class LotteryService(
     val db: FirebaseFirestore = FirebaseFirestore.getInstance(),
 ) {
     private val waitlistRef = db.collection("waitlist")
     private val lotteriesRef = db.collection("lotteries")
-
-    /**
-     * Randomly selects up to numWinners distinct entrants from the waitlist.
-     * If there are fewer entrants than winners, everyone wins
-     *
-     * @param lottery the lottery being drawn
-     * @param entries the waitlist entries for the lottery
-     * @param random source of randomness, replaceable in tests
-     *
-     * @return the winning entries
-     */
-    fun drawWinners(
-        lottery: Lottery,
-        entries: List<WaitlistEntry>,
-        random: Random = Random.Default
-    ): List<WaitlistEntry> {
-        return entries
-            .filter { it.lotteryId == lottery.id }
-            .distinctBy { it.deviceId }
-            .shuffled(random)
-            .take(lottery.numWinners)
-    }
 
     /**
      * Loads the lottery's waitlist, draws the winners and saves the result

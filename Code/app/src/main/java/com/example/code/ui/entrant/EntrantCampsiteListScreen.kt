@@ -49,9 +49,9 @@ import com.example.code.sites
 import com.example.code.ui.components.CampsiteDateRangeDialog
 import com.example.code.ui.components.CampsiteFilterSheet
 import com.example.code.ui.navigation.BottomNavBar
-import com.example.code.ui.navigation.CampsiteFilters
-import com.example.code.ui.navigation.filterCampsites
-import com.example.code.ui.navigation.filterSummary
+import com.example.code.rules.CampsiteFilters
+import com.example.code.rules.filterCampsites
+import com.example.code.rules.filterSummary
 
 //private val sampleCampsites = listOf(
 //    CampsiteListItem(Campsite(id = "sample1", name = "Banff-ish Park", location = "Banff"), true),

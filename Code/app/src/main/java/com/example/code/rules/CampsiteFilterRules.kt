@@ -1,4 +1,4 @@
-package com.example.code.ui.navigation
+package com.example.code.rules
 
 import com.example.code.ui.entrant.CampsiteListItem
 import java.text.SimpleDateFormat

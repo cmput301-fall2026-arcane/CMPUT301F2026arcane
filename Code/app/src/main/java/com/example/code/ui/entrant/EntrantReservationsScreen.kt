@@ -29,7 +29,7 @@ import com.example.code.repositories.ReservationRepository
 import com.example.code.col
 import com.example.code.services.currentEntrant
 import com.example.code.rules.splitReservations
-import com.example.code.ui.navigation.todayUtcMillis
+import com.example.code.rules.todayUtcMillis
 import com.example.code.ui.navigation.BottomNavBar
 import kotlin.coroutines.cancellation.CancellationException
 

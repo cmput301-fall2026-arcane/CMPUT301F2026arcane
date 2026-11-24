@@ -1,4 +1,4 @@
-package com.example.code.repositories
+package com.example.code.services
 
 import com.example.code.model.User
 import com.example.code.rules.canRemoveProfiles

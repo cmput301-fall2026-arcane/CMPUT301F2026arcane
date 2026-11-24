@@ -1,7 +1,9 @@
 package com.example.code.rules
 
+import com.example.code.model.Lottery
 import com.example.code.model.LotteryResult
 import com.example.code.model.WaitlistEntry
+import kotlin.random.Random
 
 /* US 02.05.01 As a campsite owner, I want the system to automatically draw winners after the
 registration period ends
@@ -46,4 +48,26 @@ fun buildResults(
  */
 fun resultId(lotteryId: String, deviceId: String): String {
     return "${lotteryId}_$deviceId"
+}
+
+/**
+ * Randomly selects up to numWinners distinct entrants from the waitlist.
+ * If there are fewer entrants than winners, everyone wins
+ *
+ * @param lottery the lottery being drawn
+ * @param entries the waitlist entries for the lottery
+ * @param random source of randomness, replaceable in tests
+ *
+ * @return the winning entries
+ */
+fun drawWinners(
+    lottery: Lottery,
+    entries: List<WaitlistEntry>,
+    random: Random = Random.Default
+): List<WaitlistEntry> {
+    return entries
+        .filter { it.lotteryId == lottery.id }
+        .distinctBy { it.deviceId }
+        .shuffled(random)
+        .take(lottery.numWinners)
 }

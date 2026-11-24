@@ -36,7 +36,7 @@ sealed class DrawOutcome {
  */
 class LotteryDraw (
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance(),
-    private val lotteries: LotterySystem = LotterySystem(db)
+    private val lotteries: LotteryService = LotteryService(db)
 ) {
     private val waitlistRef = db.collection("waitlist")
     private val resultsRef = db.collection("results")
