@@ -65,7 +65,7 @@ fun OwnerHomeScreen(nav: NavController) {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Welcome, Admin!",
+            text = "Welcome, Owner!",
             color = Color.White,
             fontSize = 36.sp,
             fontWeight = FontWeight.Bold
@@ -87,14 +87,14 @@ fun OwnerHomeScreen(nav: NavController) {
         ) {
             MenuButton(
                 label = "View My Reservations",
-                onClick = {},
+                onClick = { nav.navigate("reservations") },
                 height = 75.dp,
                 modifier = Modifier.weight(1f)
             )
 
             MenuButton(
                 label = "View Lotteries",
-                onClick = {},
+                onClick = { nav.navigate("myLotteries") },
                 height = 75.dp,
                 modifier = Modifier.weight(1f)
             )

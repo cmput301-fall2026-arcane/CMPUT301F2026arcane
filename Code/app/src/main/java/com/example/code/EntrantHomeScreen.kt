@@ -66,7 +66,7 @@ fun EntrantHomeScreen(nav: NavController) {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Welcome, Admin!",
+            text = "Welcome, Entrant!",
             color = Color.White,
             fontSize = 36.sp,
             fontWeight = FontWeight.Bold
