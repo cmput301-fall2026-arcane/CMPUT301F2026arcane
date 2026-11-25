@@ -2,6 +2,14 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     id("com.google.gms.google-services")
+    id("org.jetbrains.dokka") version "2.3.0"
+}
+
+dokka {
+    moduleName.set("arcane")
+    dokkaPublications.html {
+        outputDirectory.set(rootDir.parentFile.resolve("docs"))
+    }
 }
 
 android {
