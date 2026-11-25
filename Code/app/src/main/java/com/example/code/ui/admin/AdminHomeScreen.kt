@@ -88,14 +88,14 @@ fun HomeScreen(nav: NavController) {
         ) {
             MenuButton(
                 label = "View My Reservations",
-                onClick = {},
+                onClick = { nav.navigate("reservations") },
                 height = 75.dp,
                 modifier = Modifier.weight(1f)
             )
 
             MenuButton(
                 label = "View Lotteries",
-                onClick = {},
+                onClick = { nav.navigate("myLotteries") },
                 height = 75.dp,
                 modifier = Modifier.weight(1f)
             )
