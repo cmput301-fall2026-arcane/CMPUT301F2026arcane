@@ -20,17 +20,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,11 +36,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 
 data class AdminCampsiteListItem(
     val adminCampsite: Campsite
@@ -56,8 +50,6 @@ fun AdminCampsiteListScreen(mainNav: NavController, repo: CampsiteRepository) {
     remember { repo.listenToAll()
         true
     }
-
-    var toDelete by remember { mutableStateOf<Campsite?>(null) }
 
     Column(
         modifier = Modifier.fillMaxSize().systemBarsPadding().padding(bottom = 100.dp),
@@ -85,8 +77,8 @@ fun AdminCampsiteListScreen(mainNav: NavController, repo: CampsiteRepository) {
             items(repo.liveCampsites, key = {it.id}) { item ->
                 ACampsiteCard (
                     item = item,
-                    onClick = {},
-                    onDelete = { toDelete = item }
+                    onClick = {mainNav.navigate("campsite/${item.id}")
+                              }
                 )
             }
         }
@@ -98,28 +90,11 @@ fun AdminCampsiteListScreen(mainNav: NavController, repo: CampsiteRepository) {
     ) {
         BottomNavBar("users", mainNav)
     }
-
-    toDelete?.let { item ->
-        AlertDialog(
-            onDismissRequest = { toDelete = null},
-            title = { Text("Delete user?") },
-            text = { Text("Remove ${item.name}? This action cannot be undone.") },
-            confirmButton = {
-                TextButton(onClick = {
-                    repo.deleteCampsite(item.id)
-                    toDelete = null
-                }) { Text("Delete")}
-            },
-            dismissButton = {
-                TextButton(onClick = {toDelete = null}) {Text("Cancel") }
-            }
-        )
-    }
 }
 
 
 @Composable
-fun ACampsiteCard(item: Campsite, onClick: () -> Unit, onDelete:() -> Unit) {
+fun ACampsiteCard(item: Campsite, onClick: () -> Unit) {
 
     Row(
         modifier = Modifier
@@ -151,15 +126,6 @@ fun ACampsiteCard(item: Campsite, onClick: () -> Unit, onDelete:() -> Unit) {
                     .width(32.dp)
                     .background(Brush.horizontalGradient(listOf(col.UserCard, Color.Transparent)))
             )
-            IconButton(                                   // NEW
-                onClick = onDelete,
-                modifier = Modifier.align(Alignment.CenterEnd)
-            ) {
-                Text(
-                    text = "🗑️",
-                    fontSize = 22.sp
-                )
-            }
         }
     }
 }

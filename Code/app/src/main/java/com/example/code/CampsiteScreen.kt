@@ -1,5 +1,6 @@
 package com.example.code
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -47,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.code.R
+import com.example.code.ui.theme.Purple40
 import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -80,6 +82,9 @@ fun CampsiteScreen(mainNav: NavController, campsiteId: String) {
     var message by remember { mutableStateOf<String?>(null) }
     var showLeaveConfirm by remember { mutableStateOf(false) }
     var showReserveDates by remember { mutableStateOf(false) }
+    var confirmDeleteImage by remember { mutableStateOf(false)}
+    var confirmDeleteCampsite by remember { mutableStateOf(false)}
+
 
     // load the campsite once when the screen opens
     LaunchedEffect(campsiteId) {
@@ -140,6 +145,9 @@ fun CampsiteScreen(mainNav: NavController, campsiteId: String) {
                     lotteryLabel = status?.let { lotteryButtonLabel(it) } ?: "LOADING...",
                     lotteryEnabled = status != null && canPressLotteryButton(status) && !busy,
                     lotteryMessage = message ?: status?.let { lotteryStatusMessage(it, state?.lottery) },
+                    isAdmin = logged_user_type == Role.ADMIN,
+                    onDeleteImage = {confirmDeleteImage = true},
+                    onDeleteCampsite = {confirmDeleteCampsite = true},
                     onBack = { mainNav.popBackStack() },
                     onLotteryButton = { message = null; onLotteryButton() }
                 )
@@ -200,6 +208,47 @@ fun CampsiteScreen(mainNav: NavController, campsiteId: String) {
             onDismiss = { showReserveDates = false }
         )
     }
+    if (confirmDeleteImage) {
+        AlertDialog(
+            onDismissRequest = { confirmDeleteImage = false },
+            title = { Text("Delete campsite image?") },
+            text = { Text("The image will be removed from this campsite.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmDeleteImage = false
+                    busy = true
+                    repo.deleteCampsiteImage(campsiteId) { ok ->
+                        message = if (ok) "Image deleted" else "Could not delete the image"
+                        busy = false
+                    }
+                }) { Text("Delete") }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmDeleteImage = false }) { Text("Cancel") }
+            }
+        )
+    }
+
+    if (confirmDeleteCampsite) {
+        AlertDialog(
+            onDismissRequest = { confirmDeleteCampsite = false },
+            title = { Text("Delete this campsite?") },
+            text = { Text("This permanently removes the campsite and cannot be undone.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmDeleteCampsite = false
+                    busy = true
+                    repo.deleteCampsite(campsiteId) { ok ->
+                        busy = false
+                        if (ok) mainNav.popBackStack() else message = "Could not delete the campsite"
+                    }
+                }) { Text("Delete") }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmDeleteCampsite = false }) { Text("Cancel") }
+            }
+        )
+    }
 }
 
 /**
@@ -218,6 +267,9 @@ private fun CampsiteDetailsCard(
     lotteryLabel: String,
     lotteryEnabled: Boolean,
     lotteryMessage: String?,
+    isAdmin: Boolean,
+    onDeleteImage: () -> Unit,
+    onDeleteCampsite: () -> Unit,
     onBack: () -> Unit,
     onLotteryButton: () -> Unit
 ) {
@@ -315,6 +367,31 @@ private fun CampsiteDetailsCard(
                             color = col.CardText.copy(alpha = if (lotteryEnabled) 1f else 0.6f),
                             fontSize = 13.sp
                         )
+                    }
+                }
+            }
+
+            if (isAdmin) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Button(
+                        onClick = onDeleteImage,
+                        shape = RoundedCornerShape(6.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Purple40),
+                        modifier = Modifier.weight(1f).height(40.dp)
+                    ) {
+                        Text("Delete Image", fontSize = 13.sp)
+                    }
+                    Button(
+                        onClick = onDeleteCampsite,
+                        shape = RoundedCornerShape(6.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Purple40),
+                        modifier = Modifier.weight(1f).height(40.dp)
+                    ) {
+                        Text("Delete Campsite", fontSize = 13.sp)
                     }
                 }
             }

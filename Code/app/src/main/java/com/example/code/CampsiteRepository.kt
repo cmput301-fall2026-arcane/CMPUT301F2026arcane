@@ -180,20 +180,28 @@ class CampsiteRepository (db: FirebaseFirestore = FirebaseFirestore.getInstance(
      * Delete a campsite from the database.
      *
      * @param id the id of the campsite to delete
+     * @param onResult is true if deletion work, is false if deletion did not work
      */
-    fun deleteCampsite(id: String) {
+    fun deleteCampsite(id: String, onResult: (Boolean) -> Unit = {}) {
         if (id.isEmpty()) {
-            // TODO: Passback status
+            onResult(false)
             return
         }
         campsitesRef.document(id)
             .delete()
-            .addOnSuccessListener { documentReference ->
-                // TODO: Passback status
-            }
-            .addOnFailureListener { e ->
-                //TODO: Passback status
-            }
+            .addOnSuccessListener { onResult(true) }
+            .addOnFailureListener { onResult(false) }
+    }
+
+    fun deleteCampsiteImage(id: String, onResult: (Boolean) -> Unit = {}) {
+        if (id.isEmpty()) {
+            onResult(false)
+            return
+        }
+        campsitesRef.document(id)
+            .update("imageUrl", "")
+            .addOnSuccessListener { onResult(true) }
+            .addOnFailureListener { onResult(false) }
     }
 
     /**
