@@ -4,13 +4,14 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.runtime.remember
+import com.example.code.model.Role
+import com.example.code.repositories.CampsiteRepository
+import com.example.code.repositories.UserRepository
+import com.example.code.ui.navigation.ArcaneApp
 import com.example.code.ui.theme.AppColors
 import com.example.code.ui.theme.CodeTheme
-import com.google.firebase.Firebase
 import com.google.firebase.FirebaseApp
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.firestore
 
 val col = AppColors
 
