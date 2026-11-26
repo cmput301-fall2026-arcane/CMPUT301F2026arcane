@@ -37,6 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.coroutines.coroutineContext
 
 private const val MAX_GUESTS = 50
 
@@ -148,6 +149,9 @@ private fun StepButton(label: String, enabled: Boolean, onClick: () -> Unit) {
  * @param endDate the currently picked last date, or null
  * @param onConfirm called with the picked dates when OK is tapped
  * @param onDismiss called when the dialog is closed without picking
+ * @param unavailableDates nights that need to be greyed out and unselectable
+ * @param checkStay when true, only works for valid stay -> for reserving not filtering
+ * @param title calendar text -> used for both filtering and reserving
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -155,16 +159,30 @@ fun CampsiteDateRangeDialog(
     startDate: Long?,
     endDate: Long?,
     onConfirm: (Long?, Long?) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    unavailableDates: Set<Long> = emptySet(),
+    checkStay: Boolean = false,
+    title: String = "Select your dates"
 ) {
     val today = remember { todayUtcMillis() }
     val state = rememberDateRangePickerState(
         initialSelectedStartDateMillis = startDate,
         initialSelectedEndDateMillis = endDate,
         selectableDates = object : SelectableDates {
-            override fun isSelectableDate(utcTimeMillis: Long): Boolean = utcTimeMillis >= today
+            override fun isSelectableDate(utcTimeMillis: Long): Boolean =
+                utcTimeMillis >= today && utcTimeMillis !in unavailableDates
         }
     )
+
+    //catching booked nights within a range (not the ends)
+    val pickedStart = state.selectedStartDateMillis
+    val stayProblem = if (checkStay && pickedStart != null){
+        validateStay (pickedStart, state.selectedEndDateMillis ?: pickedStart, unavailableDates)
+    } else {
+        null
+    }
+
+
     val colors = DatePickerDefaults.colors(
         containerColor = col.BottomSheetBackground,
         selectedDayContainerColor = col.SubmitButton,
@@ -178,7 +196,7 @@ fun CampsiteDateRangeDialog(
         confirmButton = {
             TextButton(
                 onClick = { onConfirm(state.selectedStartDateMillis, state.selectedEndDateMillis) },
-                enabled = state.selectedStartDateMillis != null
+                enabled = state.selectedStartDateMillis != null && stayProblem == null
             ) {
                 Text("OK", color = col.CardText)
             }
@@ -193,9 +211,17 @@ fun CampsiteDateRangeDialog(
             state = state,
             colors = colors,
             title = {
-                Text("Select your dates", modifier = Modifier.padding(start = 24.dp, top = 16.dp))
+                Text(title, modifier = Modifier.padding(start = 24.dp, top = 16.dp))
             },
             modifier = Modifier.weight(1f)
         )
+        if (stayProblem != null) {
+            Text(
+                text = stayProblem,
+                color = col.CardText,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+            )
+        }
     }
 }

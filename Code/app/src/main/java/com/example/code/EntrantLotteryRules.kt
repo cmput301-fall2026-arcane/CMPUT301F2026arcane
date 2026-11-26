@@ -14,6 +14,12 @@ Works out where an entrant stands with a lottery, what the lottery button should
 reservations are active. No Firestore calls so they can be unit tested
 */
 
+/** One day in millis. Dates from the date picker are UTC midnights, so nights are this far apart */
+const val DAY_MILLIS = 24L * 60 * 60 * 1000
+
+/** The longest stay a winner can reserve */
+const val MAX_STAY_NIGHTS = 14
+
 /**
  * Where the entrant stands with a campsite's lottery
  */
@@ -30,6 +36,13 @@ enum class EntrantLotteryStatus {
     JOINED,
     /** the entrant was drawn and hasn't reserved yet */
     WON,
+
+    /** the entrant was drawn but the booking period hasn't started */
+    BOOKING_NOT_OPEN,
+
+    /** the entrant was drawn but the booking period ended before they reserved */
+    OFFER_EXPIRED,
+
     /** the draw happened and the entrant wasn't picked */
     NOT_SELECTED,
     /** the entrant has made (or cancelled) a reservation from this lottery */
@@ -56,12 +69,31 @@ fun entrantLotteryStatus(
     if (lottery == null) return EntrantLotteryStatus.NO_LOTTERY
     if (reservation != null) return EntrantLotteryStatus.RESERVED
     if (result != null) {
-        return if (result.won) EntrantLotteryStatus.WON else EntrantLotteryStatus.NOT_SELECTED
+        if (!result.won) return EntrantLotteryStatus.NOT_SELECTED
+        if (isOfferExpired(now, lottery.bookingCloseDate)) return EntrantLotteryStatus.OFFER_EXPIRED
+        if (!hasBookingStarted(now, lottery)) return EntrantLotteryStatus.BOOKING_NOT_OPEN
+        return EntrantLotteryStatus.WON
     }
     if (joined) return EntrantLotteryStatus.JOINED
     if (now < lottery.openDate) return EntrantLotteryStatus.NOT_OPEN_YET
     if (now >= lottery.closeDate) return EntrantLotteryStatus.CLOSED
     return EntrantLotteryStatus.OPEN
+}
+
+/** Check whether booking period has started
+ * bookingOpenDate = 0 counts as started
+ */
+fun hasBookingStarted(now: Long, lottery: Lottery): Boolean {
+    return lottery.bookingOpenDate <= 0L || now >= lottery.bookingOpenDate
+}
+
+/** Check whether the winners can reserve
+ * @param now the current time
+ * @param lottery the lottery that was won
+ * @return true if reserving is possible
+ */
+fun canReserveNow(now: Long, lottery: Lottery): Boolean {
+    return hasBookingStarted(now, lottery) && !isOfferExpired(now, lottery.bookingCloseDate)
 }
 
 /**
@@ -101,6 +133,8 @@ fun lotteryButtonLabel(status: EntrantLotteryStatus): String {
         EntrantLotteryStatus.CLOSED -> "LOTTERY CLOSED"
         EntrantLotteryStatus.JOINED -> "LEAVE LOTTERY"
         EntrantLotteryStatus.WON -> "RESERVE NOW"
+        EntrantLotteryStatus.BOOKING_NOT_OPEN -> "BOOKING OPENS SOON"
+        EntrantLotteryStatus.OFFER_EXPIRED -> "OFFER EXPIRED"
         EntrantLotteryStatus.NOT_SELECTED -> "NOT SELECTED"
         EntrantLotteryStatus.RESERVED -> "VIEW RESERVATION"
     }
@@ -126,13 +160,21 @@ fun canPressLotteryButton(status: EntrantLotteryStatus): Boolean {
 fun lotteryStatusMessage(status: EntrantLotteryStatus, lottery: Lottery?): String {
     val opens = lottery?.let { formatDay(it.openDate) } ?: ""
     val closes = lottery?.let { formatDay(it.closeDate) } ?: ""
+    val bookingOpens = lottery?.let { formatDay(it.bookingOpenDate) } ?: ""
+    val bookingCloses = lottery?.takeIf { it.bookingCloseDate > 0L }
+        ?.let { formatDay(it.bookingCloseDate) }
     return when (status) {
         EntrantLotteryStatus.NO_LOTTERY -> "This campsite isn't in a lottery yet"
         EntrantLotteryStatus.NOT_OPEN_YET -> "Lottery opens $opens"
         EntrantLotteryStatus.OPEN -> "Lottery open until $closes"
         EntrantLotteryStatus.CLOSED -> "Lottery closed on $closes"
         EntrantLotteryStatus.JOINED -> "You're entered! Winners are drawn after $closes"
-        EntrantLotteryStatus.WON -> "You won! Pick your dates to reserve"
+        EntrantLotteryStatus.WON ->
+            if (bookingCloses != null) "You won! Reserve by $bookingCloses"
+            else "You won! Reserve now!"
+
+        EntrantLotteryStatus.BOOKING_NOT_OPEN -> "You won! Booking opens $bookingOpens"
+        EntrantLotteryStatus.OFFER_EXPIRED -> "You won, but booking closed on ${bookingCloses ?: ""}"
         EntrantLotteryStatus.NOT_SELECTED -> "You weren't selected this time"
         EntrantLotteryStatus.RESERVED -> "You have a reservation from this lottery"
     }
@@ -144,9 +186,10 @@ fun lotteryStatusMessage(status: EntrantLotteryStatus, lottery: Lottery?): Strin
 fun myLotteryOrder(status: EntrantLotteryStatus): Int {
     return when (status) {
         EntrantLotteryStatus.WON -> 0
-        EntrantLotteryStatus.JOINED -> 1
-        EntrantLotteryStatus.RESERVED -> 2
-        else -> 3
+        EntrantLotteryStatus.BOOKING_NOT_OPEN -> 1
+        EntrantLotteryStatus.JOINED -> 2
+        EntrantLotteryStatus.RESERVED -> 3
+        else -> 4
     }
 }
 
@@ -194,4 +237,69 @@ fun splitReservations(
 ): Pair<List<Reservation>, List<Reservation>> {
     val (active, past) = reservations.partition { isReservationActive(it, today) }
     return active.sortedBy { it.startDate } to past.sortedByDescending { it.startDate }
+}
+
+/**
+ * How many nights a stay covers. The end date is the last night, so Nov 10 to Nov 12 is 3 nights
+ *
+ * @param startDate first night, as UTC midnight millis
+ * @param endDate last night, as UTC midnight millis
+ * @return the number of nights, 0 if the end is before the start
+ */
+fun nightCount(startDate: Long, endDate: Long): Int {
+    if (endDate < startDate) return 0
+    return ((endDate - startDate) / DAY_MILLIS).toInt() + 1
+}
+
+/**
+ * Every night a stay covers, as UTC midnight millis
+ *
+ * @param startDate first night
+ * @param endDate last night
+ * @return the nights in order, empty if the end is before the start
+ */
+fun nightsOf(startDate: Long, endDate: Long): List<Long> {
+    return List(nightCount(startDate, endDate)) { startDate + it * DAY_MILLIS }
+}
+
+/**
+ * Checks that none of a stay's nights are already booked
+ *
+ * @param startDate first night
+ * @param endDate last night
+ * @param booked nights already booked at the campsite
+ * @return true if every night in the stay is free
+ */
+fun isRangeFree(startDate: Long, endDate: Long, booked: Set<Long>): Boolean {
+    return booked.none { it in startDate..endDate }
+}
+
+/**
+ * Checks a stay a winner has picked
+ *
+ * @param startDate first night
+ * @param endDate last night
+ * @param booked nights already booked at the campsite
+ * @return null if the stay is fine, otherwise a message saying what's wrong
+ */
+fun validateStay(startDate: Long, endDate: Long, booked: Set<Long>): String? {
+    val nights = nightCount(startDate, endDate)
+    return when {
+        nights < 1 -> "Pick at least one night"
+        nights > MAX_STAY_NIGHTS -> "Stays can be at most $MAX_STAY_NIGHTS nights"
+        !isRangeFree(startDate, endDate, booked) -> "Some of those nights are already booked"
+        else -> null
+    }
+}
+
+/**
+ * Builds the document id that locks one night at one campsite. Only one reservation can hold
+ * each id, which is what stops two winners booking the same night
+ *
+ * @param campsiteId id of the campsite
+ * @param night the night, as UTC midnight millis
+ * @return the document id for the night
+ */
+fun bookedNightId(campsiteId: String, night: Long): String {
+    return "${campsiteId}_$night"
 }

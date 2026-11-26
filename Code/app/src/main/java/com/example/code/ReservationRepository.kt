@@ -2,6 +2,7 @@ package com.example.code
 
 import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreException
 import kotlinx.coroutines.tasks.await
 
 /* US 01.06.01 As an entrant, I want to view a list of my active reservations
@@ -18,8 +19,9 @@ private const val TAG = "ReservationRepository"
  *
  * @param db the Firestore instance to use
  */
-class ReservationRepository(db: FirebaseFirestore = FirebaseFirestore.getInstance()) {
+class ReservationRepository(private val db: FirebaseFirestore = FirebaseFirestore.getInstance()) {
     private val reservationsRef = db.collection("reservations")
+    private val nightsRef = db.collection("bookedNights")
 
     /**
      * Saves a reservation for a lottery winner
@@ -42,6 +44,8 @@ class ReservationRepository(db: FirebaseFirestore = FirebaseFirestore.getInstanc
         require(entrant.deviceId.isNotEmpty() && lotteryId.isNotEmpty()) {
             "Missing entrant or lottery"
         }
+        validateStay(startDate, endDate, emptySet())?.let { throw IllegalArgumentException(it) }
+
         val id = reservationId(lotteryId, entrant.deviceId)
         val reservation = Reservation(
             id = id,
@@ -53,8 +57,52 @@ class ReservationRepository(db: FirebaseFirestore = FirebaseFirestore.getInstanc
             endDate = endDate,
             createdAt = System.currentTimeMillis()
         )
-        reservationsRef.document(id).set(reservation).await()
+        val reservationRef = reservationsRef.document(id)
+        val nights = nightsOf(startDate, endDate)
+        val nightRefs = nights.map { nightsRef.document(bookedNightId(campsite.id, it)) }
+
+        db.runTransaction<Unit> { transaction ->
+            val taken = nightRefs.map { transaction.get(it) }.any { it.exists() }
+            val alreadyReserved = transaction.get(reservationRef).exists()
+
+            if (taken) {
+                throw FirebaseFirestoreException(
+                    "Some of those nights were just booked. Please pick different nights",
+                    FirebaseFirestoreException.Code.ABORTED
+                )
+            }
+
+            if (alreadyReserved) {
+                throw FirebaseFirestoreException(
+                    "You've already made a reservation",
+                    FirebaseFirestoreException.Code.ABORTED
+                )
+            }
+
+            transaction.set(reservationRef, reservation)
+            nights.zip(nightRefs).forEach { (night, ref) ->
+                transaction.set(
+                    ref,
+                    mapOf("campsiteId" to campsite.id, "night" to night, "reservationId" to id)
+                )
+            }
+        }.await()
+        //reservationsRef.document(id).set(reservation).await()
         return reservation
+    }
+
+    /**
+     * Loads every night already booked at a campsite, for greying them out in the date picker
+     *
+     * @param campsiteId id of the campsite
+     * @return the booked nights, as UTC midnight millis
+     */
+    suspend fun bookedNights(campsiteId: String): Set<Long> {
+        if (campsiteId.isEmpty()) return emptySet()
+        return nightsRef.whereEqualTo("campsiteId", campsiteId).get().await()
+            .documents
+            .mapNotNull { it.getLong("night") }
+            .toSet()
     }
 
     /**
@@ -90,12 +138,24 @@ class ReservationRepository(db: FirebaseFirestore = FirebaseFirestore.getInstanc
             }
     }
 
+
     /**
      * Cancels a reservation. It stays in Firestore marked as cancelled
      *
      * @param id the reservation's id
      */
     suspend fun cancel(id: String) {
-        reservationsRef.document(id).update("cancelled", true).await()
+        val reservationRef = reservationsRef.document(id)
+        db.runTransaction<Unit> { transaction ->
+            val reservation = transaction.get(reservationRef).toObject(Reservation::class.java)
+                ?: return@runTransaction
+
+            val heldNights = nightsOf(reservation.startDate, reservation.endDate)
+                .map { nightsRef.document(bookedNightId(reservation.campsiteId, it))}
+                .filter { transaction.get(it).getString("reservationId") == id }
+            transaction.update(reservationRef, "cancelled", true)
+            heldNights.forEach { transaction.delete(it)}
+
+        }.await()
     }
 }

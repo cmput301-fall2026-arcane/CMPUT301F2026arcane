@@ -133,7 +133,9 @@ fun MyLotteriesScreen(nav: NavController) {
                                 message = null
                                 when (row.status) {
                                     EntrantLotteryStatus.JOINED -> leaving = row
-                                    EntrantLotteryStatus.WON -> reserving = row
+                                    EntrantLotteryStatus.WON ->
+                                        if (row.campsite != null) reserving = row
+                                        else message = "Could not load this campsite"
                                     EntrantLotteryStatus.RESERVED ->
                                         row.reservation?.let { nav.navigate("reservation/${it.id}") }
                                     else -> {}
@@ -167,31 +169,26 @@ fun MyLotteriesScreen(nav: NavController) {
     }
 
     reserving?.let { row ->
-        CampsiteDateRangeDialog(
-            startDate = null,
-            endDate = null,
+        val site = row.campsite ?: return@let
+        ReserveDatesDialog(
+            campsiteId = site.id,
             onConfirm = { start, end ->
-                reserving = null
-                val site = row.campsite
-                if (site != null && start != null) {
-                    scope.launch {
-                        try {
-                            val reservation = entrantLotteries.reserve(
-                                currentEntrant(), row.lottery, site, start, end ?: start
-                            )
-                            nav.navigate("reservation/${reservation.id}")
-                        } catch (e: CancellationException) {
-                            throw e
-                        } catch (e: Exception) {
-                            message = e.message ?: "Could not make the reservation"
-                            refreshKey++
-                        }
+                reserving =null
+                scope.launch {
+                    try {
+                        val reservation = entrantLotteries.reserve(
+                            currentEntrant(), row.lottery, site, start, end ?: start
+                        )
+                        nav.navigate("reservation/${reservation.id}")
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        message = e.message ?: "Could not make the reservation"
+                        refreshKey++
                     }
-                } else if (site == null) {
-                    message = "Could not load this campsite"
                 }
             },
-            onDismiss = { reserving = null }
+            onDismiss = {reserving = null}
         )
     }
 }
@@ -207,7 +204,7 @@ fun MyLotteriesScreen(nav: NavController) {
 @Composable
 private fun MyLotteryCard(row: MyLotteryRow, onOpen: () -> Unit, onAction: () -> Unit) {
     val cardColor = when (row.status) {
-        EntrantLotteryStatus.WON -> WinnerGreen
+        EntrantLotteryStatus.WON, EntrantLotteryStatus.BOOKING_NOT_OPEN -> WinnerGreen
         EntrantLotteryStatus.JOINED -> col.CampsiteCardWaitlist
         else -> col.CampsiteCardOpen
     }
