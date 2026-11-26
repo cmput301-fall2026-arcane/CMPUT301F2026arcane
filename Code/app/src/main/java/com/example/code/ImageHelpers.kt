@@ -44,15 +44,18 @@ fun ImageOptions(url : String, onSelected : (Uri) -> Unit, onDelete: () -> Unit,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "-- Image Options --"
+            text = "-- Image Options --",
+            modifier = Modifier.padding(bottom = 20.dp)
         )
         Button(
-            onClick = { imagePicker.launch("image/*"); }
+            onClick = { imagePicker.launch("image/*"); },
+            modifier = Modifier.padding(bottom = 20.dp)
         ) {
-            Text(text = "Update Image")
+            Text(text = "Set New Image")
         }
         OutlinedButton(
-            onClick = { onDelete() }
+            onClick = { onDelete() },
+            modifier = Modifier.padding(bottom = 20.dp)
         ) {
             Text(text = "Delete Image")
         }

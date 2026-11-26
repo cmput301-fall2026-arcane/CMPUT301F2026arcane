@@ -13,7 +13,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -30,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
@@ -43,6 +46,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import coil3.compose.AsyncImage
 import com.example.code.R
 import com.example.code.col
 import kotlinx.coroutines.delay
@@ -232,17 +236,23 @@ fun LoginScreen(mainNav: NavController, localNav: NavController) {
  *
  * @param mainNav is the navigation controller passed in to share control
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SignUpScreen(mainNav: NavController) {
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var phoneNumber by remember { mutableStateOf("") }
+    var profileImageUrl by remember { mutableStateOf("") }
 
     var errorMessage by remember { mutableStateOf("") }
     var raiseError by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     val dId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
+
+    var showSheet by remember { mutableStateOf(false) }
+    var sheetState = rememberModalBottomSheetState ( skipPartiallyExpanded = false )
+    val placeholderProfileImg = painterResource(R.drawable.placeholder_pp)
 
     Column (
         modifier = Modifier
@@ -256,8 +266,19 @@ fun SignUpScreen(mainNav: NavController) {
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(25.dp))
-
-        Spacer(modifier = Modifier.height(100.dp)) // |aN: placeholder space for an upload profile photo circle
+        AsyncImage(
+            model = profileImageUrl,
+            contentDescription = "Profile",
+            placeholder = placeholderProfileImg,
+            error = placeholderProfileImg,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.size(140.dp).clip(CircleShape),
+        )
+        Button(
+            onClick = { showSheet = true }
+        ) {
+            Text("Add Profile Picture")
+        }
         Spacer(modifier = Modifier.height(25.dp))
         OutlinedTextField(
             value = name,
@@ -309,7 +330,7 @@ fun SignUpScreen(mainNav: NavController) {
         )
         Spacer(modifier = Modifier.height(10.dp))
         Button (
-            onClick = { handleSignUp(name, email, phoneNumber, dId, "e", { exitCode ->
+            onClick = { handleSignUp(name, email, phoneNumber, dId, profileImageUrl, "e", { exitCode ->
                         if (exitCode == 0) {
                             mainNav.navigate("entrantHome")
                         } else if (exitCode == 1) {
@@ -335,7 +356,7 @@ fun SignUpScreen(mainNav: NavController) {
         Text("OR")
         Spacer(modifier = Modifier.height(5.dp))
         Button (
-            onClick = { handleSignUp(name, email, phoneNumber, dId, "c", { exitCode ->
+            onClick = { handleSignUp(name, email, phoneNumber, dId, profileImageUrl, "c", { exitCode ->
                         if (exitCode == 0) {
                             mainNav.navigate("campOwnerHome")
                         } else if (exitCode == 1) {
@@ -359,6 +380,31 @@ fun SignUpScreen(mainNav: NavController) {
             )
         }
     }
+    if (showSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showSheet = false },
+            containerColor = col.BottomSheetBackground,
+            sheetState = sheetState,
+            modifier = Modifier
+                .padding(horizontal = 10.dp)
+                .padding(top = 120.dp)
+        ) {
+            ImageOptions(
+                url = profileImageUrl,
+                { uri ->
+                    uploadProfileImg(uri, dId, { downloadUrl -> profileImageUrl = downloadUrl })
+                    showSheet = false
+                },
+                {
+                    profileImageUrl = ""
+                    showSheet = false
+                },
+                {
+                    showSheet = false
+                }
+            )
+        }
+    }
 }
 
 /**
@@ -375,8 +421,8 @@ fun SignUpScreen(mainNav: NavController) {
  * @param type input field for mutation
  * @param onDone callback function to handle success levels
  */
-fun handleSignUp(name: String, email: String, phone: String,
-                 deviceID: String, type: String, onDone : (Number) -> Unit) {
+fun handleSignUp(name: String, email: String, phone: String, deviceID: String,
+                 profileImageUrl: String, type: String, onDone : (Number) -> Unit) {
     if (name == "" || email == "" || phone == "" || deviceID == "") {
         onDone(1)
         return
@@ -394,7 +440,7 @@ fun handleSignUp(name: String, email: String, phone: String,
 
             // creates user, updates with values, and adds role
             users.getOrCreateUser(deviceID, {
-                users.updateUser(deviceID, name, email, phone, null, null, { success ->
+                users.updateUser(deviceID, name, email, phone, null, profileImageUrl, { success ->
                     if (!success) {
                         onDone(1)
                         return@updateUser
@@ -405,6 +451,7 @@ fun handleSignUp(name: String, email: String, phone: String,
                         logged_in_device = deviceID
                         logged_in_email = email
                         logged_in_phone = phone
+                        logged_user_img = profileImageUrl
                         onDone(0)
                     })
                 })
@@ -431,6 +478,7 @@ fun handleLogin( deviceID: String, onDone : (Boolean) -> Unit) {
             logged_in_device = user.deviceId
             logged_in_email = user.email
             logged_in_phone = user.phone
+            logged_user_img = user.profileImageUrl
             onDone(true)
         } else {
             onDone(false)
