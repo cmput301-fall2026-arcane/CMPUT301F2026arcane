@@ -22,7 +22,7 @@ var logged_in_device : String = ""
 var logged_in_name : String = ""
 var logged_in_email : String = ""
 var logged_in_phone : String = ""
-
+var logged_user_img : String = ""
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

@@ -256,6 +256,7 @@ fun SignUpScreen(mainNav: NavController) {
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(25.dp))
+
         Spacer(modifier = Modifier.height(100.dp)) // |aN: placeholder space for an upload profile photo circle
         Spacer(modifier = Modifier.height(25.dp))
         OutlinedTextField(
@@ -310,7 +311,7 @@ fun SignUpScreen(mainNav: NavController) {
         Button (
             onClick = { handleSignUp(name, email, phoneNumber, dId, "e", { exitCode ->
                         if (exitCode == 0) {
-                            mainNav.navigate("EntrantHome")
+                            mainNav.navigate("entrantHome")
                         } else if (exitCode == 1) {
                             errorMessage = "Please fill all required fields."
                             raiseError = true
@@ -336,7 +337,7 @@ fun SignUpScreen(mainNav: NavController) {
         Button (
             onClick = { handleSignUp(name, email, phoneNumber, dId, "c", { exitCode ->
                         if (exitCode == 0) {
-                            mainNav.navigate("campOwnerhome")
+                            mainNav.navigate("campOwnerHome")
                         } else if (exitCode == 1) {
                             errorMessage = "Please fill all required fields."
                             raiseError = true
@@ -393,7 +394,7 @@ fun handleSignUp(name: String, email: String, phone: String,
 
             // creates user, updates with values, and adds role
             users.getOrCreateUser(deviceID, {
-                users.updateUser(deviceID, name, email, phone, null, { success ->
+                users.updateUser(deviceID, name, email, phone, null, null, { success ->
                     if (!success) {
                         onDone(1)
                         return@updateUser

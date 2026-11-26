@@ -32,9 +32,8 @@ data class User (
 //    var roles: MutableList<Role> = mutableListOf<Role>(Role.ENTRANT),
     var notificationPreference: Boolean = true,
     val createdAt: Long = System.currentTimeMillis(),
+    var profileImageUrl : String = "",
 ) {
-//    TODO: Make image class
-//    private var images = mutableListOf<Image>()
 
     /**
      * Return true if the user has the given role

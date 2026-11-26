@@ -1,5 +1,6 @@
 package com.example.code
 
+import android.R.attr.name
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.toObject
@@ -55,6 +56,7 @@ class UserRepository (db: FirebaseFirestore = FirebaseFirestore.getInstance()){
         email: String? = null,
         phone: String? = null,
         notificationPreference: Boolean? = null,
+        profileImageUrl: String? = null,
         onDone: (Boolean) -> Unit
     ) {
         if (deviceId.isEmpty()) {
@@ -73,6 +75,9 @@ class UserRepository (db: FirebaseFirestore = FirebaseFirestore.getInstance()){
         }
         if (notificationPreference != null) {
             updated["notificationPreference"] = notificationPreference
+        }
+        if (profileImageUrl != null) {
+            updated["profileImageUrl"] = profileImageUrl
         }
 
         usersRef.document(deviceId)

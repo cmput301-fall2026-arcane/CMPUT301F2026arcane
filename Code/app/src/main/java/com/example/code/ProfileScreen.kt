@@ -15,7 +15,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
@@ -43,10 +45,16 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import coil3.compose.AsyncImage
 import com.example.code.ui.theme.DarkGreen
 import com.example.code.ui.theme.MossGreen
+import kotlin.String
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,6 +65,8 @@ fun ProfileScreen(mainNav: NavController) {
     var sheetAPState = rememberModalBottomSheetState( skipPartiallyExpanded = true )
     var sheetEditState = rememberModalBottomSheetState( skipPartiallyExpanded = true )
     var sheetNotifState = rememberModalBottomSheetState( skipPartiallyExpanded = true )
+
+    val placeholderProfileImg = painterResource(R.drawable.placeholder_pp)
 
     Card(
         modifier = Modifier.height(800.dp)
@@ -74,7 +84,14 @@ fun ProfileScreen(mainNav: NavController) {
                 modifier = Modifier.fillMaxSize().padding(25.dp)
             ) {
                 Spacer(modifier = Modifier.height(30.dp))
-                Spacer(modifier = Modifier.height(110.dp)) // replace with profile image
+                AsyncImage(
+                    model = logged_user_img,
+                    contentDescription = "Profile",
+                    placeholder = placeholderProfileImg,
+                    error = placeholderProfileImg,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.size(170.dp).clip(CircleShape),
+                )
                 Spacer(modifier = Modifier.height(15.dp))
                 Text(
                     text = logged_in_name,
@@ -222,8 +239,10 @@ fun AppPolicyScreen() {
  *
  * @param mainNav is the navigation controller passed in to share control
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditDetailsScreen(mainNav: NavController) {
+    var profileImageUrl by remember { mutableStateOf(logged_user_img) }
     var name by remember { mutableStateOf(logged_in_name) }
     var email by remember { mutableStateOf(logged_in_email) }
     var phoneNumber by remember { mutableStateOf(logged_in_phone) }
@@ -233,6 +252,10 @@ fun EditDetailsScreen(mainNav: NavController) {
 
     val context = LocalContext.current
     val dId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
+
+    var showSheet by remember { mutableStateOf(false) }
+    var sheetState = rememberModalBottomSheetState ( skipPartiallyExpanded = false )
+    val placeholderProfileImg = painterResource(R.drawable.placeholder_pp)
 
     Column (
         modifier = Modifier
@@ -246,7 +269,19 @@ fun EditDetailsScreen(mainNav: NavController) {
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(25.dp))
-        Spacer(modifier = Modifier.height(100.dp)) // |aN: placeholder space for an upload profile photo circle
+        AsyncImage(
+            model = logged_user_img,
+            contentDescription = "Profile",
+            placeholder = placeholderProfileImg,
+            error = placeholderProfileImg,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.size(170.dp).clip(CircleShape),
+        )
+        Button(
+            onClick = { showSheet = true }
+        ) {
+            Text("Edit Profile Picture")
+        }
         Spacer(modifier = Modifier.height(25.dp))
         OutlinedTextField(
             value = name,
@@ -298,7 +333,7 @@ fun EditDetailsScreen(mainNav: NavController) {
         )
         Spacer(modifier = Modifier.height(10.dp))
         Button (
-            onClick = { handleEditDetails(name, email, phoneNumber, dId, { exitCode ->
+            onClick = { handleEditDetails(name, email, phoneNumber, dId, profileImageUrl, { exitCode ->
                 if (exitCode == 0) {
                     mainNav.navigate("profile")
                 } else if (exitCode == 1) {
@@ -319,6 +354,32 @@ fun EditDetailsScreen(mainNav: NavController) {
             )
         }
     }
+    if (showSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showSheet = false },
+            containerColor = col.BottomSheetBackground,
+            sheetState = sheetState,
+            modifier = Modifier
+                .padding(horizontal = 10.dp)
+                .padding(top = 120.dp)
+        ) {
+            ImageOptions(
+                url = profileImageUrl,
+                { uri ->
+                    uploadProfileImg(uri, dId, { downloadUrl -> profileImageUrl = downloadUrl })
+                    showSheet = false
+                },
+                {
+                    profileImageUrl = ""
+                    logged_user_img = ""
+                    showSheet = false
+                },
+                {
+                    showSheet = false
+                }
+            )
+        }
+    }
 }
 
 
@@ -336,13 +397,13 @@ fun EditDetailsScreen(mainNav: NavController) {
  * @param onDone callback function to handle success levels
  */
 fun handleEditDetails(name: String, email: String, phone: String,
-                 deviceID: String, onDone : (Number) -> Unit) {
+                 deviceID: String, purl: String, onDone : (Number) -> Unit) {
     if (name == "" || email == "" || phone == "" || deviceID == "") {
         onDone(1)
         return
     } // fail if fields are empty
 
-    users.updateUser(deviceID, name, email, phone, null, { success ->
+    users.updateUser(deviceID, name, email, phone, null, purl, { success ->
         if (!success) {
             onDone(1)
             return@updateUser
