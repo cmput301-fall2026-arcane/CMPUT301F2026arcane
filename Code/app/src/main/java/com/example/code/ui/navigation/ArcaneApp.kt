@@ -19,6 +19,7 @@ import com.example.code.ui.entrant.CampsiteScreen
 import com.example.code.ui.entrant.EntrantHomeScreen
 import com.example.code.ui.admin.HomeScreen
 import com.example.code.ui.entrant.MyLotteriesScreen
+import com.example.code.ui.owner.CreateCampsiteScreen
 import com.example.code.ui.owner.OwnerHomeScreen
 import com.example.code.ui.owner.OwnerToolsScreen
 import com.example.code.ui.owner.OwnerWaitlistScreen
@@ -72,6 +73,7 @@ fun ArcaneApp() {
         composable("ownerWaitlist/{campsiteId}") { entry ->
             OwnerWaitlistScreen(mainNavCon, entry.arguments?.getString("campsiteId") ?: "")
         }
+        composable("createCampsite") { CreateCampsiteScreen(mainNavCon) }
     }
 }
 
