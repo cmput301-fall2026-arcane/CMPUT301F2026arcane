@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
@@ -18,6 +19,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -29,21 +31,31 @@ import com.example.code.services.CampsiteWaitlist
 import com.example.code.services.LotteryDraw
 import com.example.code.repositories.LotteryRepository
 import com.example.code.col
+import com.example.code.logged_in_device
+import com.example.code.services.NotificationService
+import com.example.code.ui.components.ComposeMessageDialog
 import com.example.code.ui.navigation.BottomNavBar
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.coroutines.cancellation.CancellationException
 
 @Composable
 fun OwnerWaitlistScreen(nav: NavController, campsiteId: String) {
     val lotteries = remember { LotteryRepository() }
     val waitlist = remember { CampsiteWaitlist() }
+    val notifications = remember { NotificationService() }
+    val scope = rememberCoroutineScope()
     var hasLottery by remember { mutableStateOf(true) }
     var capacity by remember { mutableStateOf(0) }
     val draw = remember { LotteryDraw() }
+    var lotteryId by remember { mutableStateOf("") }
     var winnerIds by remember { mutableStateOf(setOf<String>()) }
     var closed by remember { mutableStateOf(false) }
     val dateFormat = remember { SimpleDateFormat("MMM d, yyyy", Locale.getDefault()) }
+    var showCompose by remember { mutableStateOf(false) }
+    var status by remember { mutableStateOf<String?>("") }
 
     // find the newest lottery for this campsite, then listen to its waitlist
     LaunchedEffect(campsiteId) {
@@ -54,6 +66,7 @@ fun OwnerWaitlistScreen(nav: NavController, campsiteId: String) {
             hasLottery = false
         } else {
             capacity = lottery.capacity
+            lotteryId = lottery.id
             closed = System.currentTimeMillis() >= lottery.closeDate
             waitlist.listenToLottery(lottery.id)
             winnerIds = runCatching { draw.getWinners(lottery.id) }
@@ -76,6 +89,13 @@ fun OwnerWaitlistScreen(nav: NavController, campsiteId: String) {
             } else {
                 val countText = if (capacity > 0) "${waitlist.entries.size} / $capacity entrants" else "${waitlist.entries.size} entrants"
                 Text(countText, color = Color.White, modifier = Modifier.padding(top = 8.dp))
+
+                if (waitlist.entries.isNotEmpty()) {
+                    Button(onClick = { showCompose = true }, modifier = Modifier.padding(top = 8.dp)) {
+                        Text("Message waitlist")
+                    }
+                }
+                status?.let { Text(it, color = Color.White, modifier = Modifier.padding(top = 4.dp)) }
 
                 if (waitlist.entries.isEmpty()) {
                     val emptyText = if (closed) "Registration closed. No one entered, so no winners were drawn" else "No one has joined the waitlist yet"
@@ -103,6 +123,25 @@ fun OwnerWaitlistScreen(nav: NavController, campsiteId: String) {
                     }
                 }
             }
+        }
+        if (showCompose) {
+            ComposeMessageDialog(
+                recipients = waitlist.entries.size,
+                onDismiss = { showCompose = false },
+                onSend = { text ->
+                    scope.launch {
+                        status = try {
+                            val count = notifications.sendToWaitlist(logged_in_device, lotteryId, text)
+                            "Sent to $count entrants"
+                        } catch (e: CancellationException) {
+                            throw e
+                        } catch (e: Exception) {
+                            "Could not send the message"
+                        }
+                        showCompose = false
+                    }
+                }
+            )
         }
         BottomNavBar("campOwnerHome", nav)
     }

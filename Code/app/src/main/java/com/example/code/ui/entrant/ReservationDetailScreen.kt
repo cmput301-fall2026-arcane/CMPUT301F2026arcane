@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.code.col
+import com.example.code.services.NotificationService
 import com.example.code.services.loadCampsiteNow
 import com.example.code.model.Campsite
 import com.example.code.model.Reservation
@@ -79,6 +80,7 @@ private val CancelSalmon = Color(0xFFD9A08B)
 @Composable
 fun ReservationDetailScreen(nav: NavController, reservationId: String) {
     val reservationsRepo = remember { ReservationRepository() }
+    val notifications = remember { NotificationService() }
     val campsitesRepo = remember { CampsiteRepository() }
     val scope = rememberCoroutineScope()
     var reservation by remember { mutableStateOf<Reservation?>(null) }
@@ -143,6 +145,7 @@ fun ReservationDetailScreen(nav: NavController, reservationId: String) {
                         try {
                             reservationsRepo.cancel(current.id)
                             reservation = current.copy(cancelled = true)
+                            runCatching { notifications.sendReservationCancellation(current) }
                         } catch (e: CancellationException) {
                             throw e
                         } catch (e: Exception) {

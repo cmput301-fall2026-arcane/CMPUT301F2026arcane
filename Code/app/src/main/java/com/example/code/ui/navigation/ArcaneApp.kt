@@ -29,6 +29,9 @@ import com.example.code.ui.entrant.ReservationsScreen
 import com.example.code.ui.start.StartScreens
 import com.example.code.ui.entrant.UserCampsiteListScreen
 import com.example.code.sites
+import com.example.code.ui.admin.AdminNotificationsLogScreen
+import com.example.code.ui.entrant.NotificationScreen
+import com.example.code.ui.owner.OwnerSentNotificationsScreen
 import com.example.code.users
 
 @Composable
@@ -59,13 +62,18 @@ fun ArcaneApp() {
             CampsiteScreen(mainNavCon, entry.arguments?.getString("campsiteId") ?: "")
         }
         composable("users") { AdminUserListScreen(mainNavCon, users) }
+        composable("adminNotifications") { AdminNotificationsLogScreen(mainNavCon) }
         composable("adminCampsite") { AdminCampsiteListScreen(mainNavCon, sites) }
         composable("myLotteries") { MyLotteriesScreen(mainNavCon) }
+        composable("notifications") { NotificationScreen(mainNavCon) }
         composable("reservations") { ReservationsScreen(mainNavCon) }
         composable("reservation/{reservationId}") { entry ->
             ReservationDetailScreen(mainNavCon, entry.arguments?.getString("reservationId") ?: "")
         }
         composable("ownerCampsites") { CampsiteOwnerListPage(mainNavCon) }
+        composable("ownerSentNotifications/{campsiteId}") { entry ->
+            OwnerSentNotificationsScreen(mainNavCon, entry.arguments?.getString("campsiteId") ?: "")
+        }
         composable("ownerTools/{campsiteId}") { entry ->
             OwnerToolsScreen(mainNavCon, entry.arguments?.getString("campsiteId") ?: "")
         }

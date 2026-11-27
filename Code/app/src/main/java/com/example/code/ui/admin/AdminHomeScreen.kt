@@ -134,6 +134,15 @@ fun HomeScreen(nav: NavController) {
                 modifier = Modifier.weight(1f)
             )
         }
+
+        Spacer(Modifier.height(12.dp))
+
+        MenuButton(
+            label = "Notification Logs",
+            onClick = { nav.navigate("adminNotifications") },
+            height = 75.dp,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
     Column(
         modifier = Modifier.fillMaxSize(),

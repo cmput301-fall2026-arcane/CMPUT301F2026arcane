@@ -36,7 +36,8 @@ sealed class DrawOutcome {
  */
 class LotteryDraw (
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance(),
-    private val lotteries: LotteryService = LotteryService(db)
+    private val lotteries: LotteryService = LotteryService(db),
+    private val notifications: NotificationService = NotificationService(db),
 ) {
     private val waitlistRef = db.collection("waitlist")
     private val resultsRef = db.collection("results")
@@ -55,7 +56,10 @@ class LotteryDraw (
         return try {
             val document = lotteriesRef.document(lottery.id).get().await()
             if (!document.exists()) return DrawOutcome.Failure("Lottery not found")
-            if (document.getLong("drawnAt") != null) return DrawOutcome.AlreadyDrawn
+            if (document.getLong("drawnAt") != null) {
+                runCatching { notifyPending(lottery) }
+                return DrawOutcome.AlreadyDrawn
+            }
 
             val now = System.currentTimeMillis()
             if (!isDrawDue(now, lottery.closeDate, false)) return DrawOutcome.NotDue
@@ -76,12 +80,29 @@ class LotteryDraw (
             }
             batch.commit().await()
 
+            // The draw has already succeeded, so a failed notification shouldn't undo it
+            // Results stay notified = false, so notifyPending retries them next time
+            runCatching { notifications.sendLotteryResults(lottery, results) }
+
             DrawOutcome.Success(results.filter { it.won }, entries.size)
         } catch (e: IllegalStateException) {
             DrawOutcome.AlreadyDrawn
         } catch (e: Exception) {
             DrawOutcome.Failure(e.message ?: "Could not run the draw")
         }
+    }
+
+    /**
+     * Sends result notifications that didn't go out when the lottery was drawn
+     *
+     * @param lottery the drawn lottery
+     */
+    private suspend fun notifyPending(lottery: Lottery) {
+        val pending = resultsRef.whereEqualTo("lotteryId", lottery.id)
+            .whereEqualTo("notified", false)
+            .get().await()
+            .toObjects(LotteryResult::class.java)
+        if (pending.isNotEmpty()) notifications.sendLotteryResults(lottery, pending)
     }
 
     /**

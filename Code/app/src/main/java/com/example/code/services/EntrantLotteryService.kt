@@ -69,7 +69,8 @@ class EntrantLotteries(
     private val reservations: ReservationRepository = ReservationRepository(),
     private val campsites: CampsiteRepository = CampsiteRepository(),
     private val waitlist: CampsiteWaitlist = CampsiteWaitlist(),
-    private val draw: LotteryDraw = LotteryDraw()
+    private val draw: LotteryDraw = LotteryDraw(),
+    private val notifications: NotificationService = NotificationService(),
 ) {
     /**
      * Works out which lottery to show on a campsite's details screen and where the entrant stands
@@ -144,7 +145,7 @@ class EntrantLotteries(
         }
 
     /**
-     * Books a campsite for a lottery winner
+     * Books a campsite for a lottery winner and notifies them it is confirmed
      *
      * @return the saved reservation
      */
@@ -154,7 +155,12 @@ class EntrantLotteries(
         campsite: Campsite,
         startDate: Long,
         endDate: Long
-    ): Reservation = reservations.reserve(entrant, lottery.id, campsite, startDate, endDate)
+    ): Reservation {
+        val reservation = reservations.reserve(entrant, lottery.id, campsite, startDate, endDate)
+        // the booking is saved either way, so a failed notification doesn't fail it
+        runCatching { notifications.sendReservationConfirmation(reservation) }
+        return reservation
+    }
 
     private suspend fun drawIfDue(lottery: Lottery, now: Long) {
         if (isDrawDue(now, lottery.closeDate, lottery.isDrawn)) {

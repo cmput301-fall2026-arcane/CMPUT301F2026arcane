@@ -1,8 +1,10 @@
 package com.example.code.services
 
+import com.example.code.model.Notification
 import com.example.code.model.User
 import com.example.code.rules.canRemoveProfiles
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
 
 /* The admin actions on user profiles. It reads every profile in the "users" collection and
 deletes one once the admin has confirmed
@@ -25,7 +27,7 @@ sealed class RemovalResult {
  * @param actor the admin performing the actions
  * @param db the Firestore instance to use
  * */
-class Admin (private val actor: User, db: FirebaseFirestore = FirebaseFirestore.getInstance()) {
+class AdminService (private val actor: User, val db: FirebaseFirestore = FirebaseFirestore.getInstance()) {
     private val usersRef = db.collection("users")
 
     /**

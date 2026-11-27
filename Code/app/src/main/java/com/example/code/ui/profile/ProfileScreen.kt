@@ -24,6 +24,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -187,7 +188,7 @@ fun ProfileScreen(mainNav: NavController) {
                         .padding(horizontal = 10.dp)
                         .padding(top = 120.dp)
                 ) {
-                    notificationsScreen(mainNav)
+                    NotificationPreferencesScreen(mainNav)
                 }
             }
         }
@@ -355,90 +356,33 @@ fun handleEditDetails(name: String, email: String, phone: String,
 }
 
 @Composable
-fun notificationsScreen(mainNav: NavController) {
-    var option1 by remember { mutableStateOf(false) }
-    var option2 by remember { mutableStateOf(true) }
-    var option3 by remember { mutableStateOf(true) }
-    var option4 by remember { mutableStateOf(true) }
-    var option5 by remember { mutableStateOf(true) }
-    var option6 by remember { mutableStateOf(true) }
-    var option7 by remember { mutableStateOf(true) }
-    var option8 by remember { mutableStateOf(true) }
+fun NotificationPreferencesScreen(mainNav: NavController) {
+    var enabled by remember { mutableStateOf<Boolean?>(null) }   // null while loading
+    var saveFailed by remember { mutableStateOf(false) }
 
-    Column (
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 55.dp)
-    ) {
-        Text(
-            text = "Change Notification Preferences",
-            modifier = Modifier.padding(bottom = 20.dp),
-            fontWeight = FontWeight.Bold
-        )
-        Row {
-            Text(
-                text="Opt out of all: ",
-                modifier = Modifier.padding(bottom=20.dp),
-                fontWeight = FontWeight.Bold
+    LaunchedEffect(Unit) {
+        users.getUser(logged_in_device) { user -> enabled = user?.notificationPreference ?: true }
+    }
+
+    Column(modifier = Modifier.fillMaxSize().padding(horizontal = 55.dp)) {
+        Text("Change Notification Preferences",
+            modifier = Modifier.padding(bottom = 20.dp), fontWeight = FontWeight.Bold)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Opt out of all notifications", modifier = Modifier.weight(1f))
+            Switch(
+                checked = enabled == false,
+                enabled = enabled != null,
+                onCheckedChange = { optedOut ->
+                    val previous = enabled
+                    enabled = !optedOut                          // update right away
+                    saveFailed = false
+                    users.updateUser(logged_in_device, notificationPreference = !optedOut) { ok ->
+                        if (!ok) { enabled = previous; saveFailed = true }   // undo if it failed
+                    }
+                }
             )
-            Switch(checked=option1, onCheckedChange = {option1=it})
         }
-        Text(
-            text="I want to receive a notification:",
-            modifier = Modifier.padding(bottom=20.dp),
-            fontWeight = FontWeight.Bold
-        )
-        Row {
-            Text(
-                text="...when I win the campsite lottery.",
-                modifier = Modifier.padding(bottom=20.dp)
-            )
-            Switch(checked=option2, onCheckedChange = {option2=it})
-        }
-        Row {
-            Text(
-                text="...when I lose the campsite lottery.",
-                modifier = Modifier.padding(bottom=20.dp)
-            )
-            Switch(checked=option3, onCheckedChange = {option3=it})
-        }
-        Row {
-            Text(
-                text="... when my campsite reservation is confirmed.",
-                modifier = Modifier.padding(bottom=20.dp)
-            )
-            Switch(checked=option4, onCheckedChange = {option4=it})
-        }
-        Row {
-            Text(
-                text="... when my campsite reservation is confirmed.",
-                modifier = Modifier.padding(bottom=20.dp)
-            )
-            Switch(checked=option5, onCheckedChange = {option5=it})
-        }
-        Row {
-            Text(
-                text="... when my reservation cancellation is confirmed.",
-                modifier = Modifier.padding(bottom=20.dp)
-            )
-            Switch(checked=option6, onCheckedChange = {option6=it})
-        }
-        Row {
-            Text(
-                text="... when I receive a message.",
-                modifier = Modifier.padding(bottom=20.dp)
-            )
-            Switch(checked=option7, onCheckedChange = {option7=it})
-        }
-        Row {
-            Text(
-                text="I want to get my reservation\n" +
-                        "by notification or CSV",
-                modifier = Modifier.padding(bottom=20.dp),
-                fontWeight = FontWeight.Bold
-            )
-            Switch(checked=option8, onCheckedChange = {option8=it})
-        }
+        if (saveFailed) Text("Could not save, try again", color = Color(0xFFFF8A80))
     }
 }
 

@@ -152,7 +152,7 @@ fun OwnerToolsScreen(nav: NavController, campsiteId: String) {
 
             MenuButton(
                 label = "All Notifications Sent",
-                onClick = {},
+                onClick = { nav.navigate("ownerSentNotifications/$campsiteId") },
                 height = 100.dp,
                 modifier = Modifier.fillMaxWidth()
             )

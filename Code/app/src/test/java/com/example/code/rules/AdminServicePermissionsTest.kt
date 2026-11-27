@@ -9,7 +9,7 @@ import org.junit.Assert.*
 /**
  * Unit tests for the admin profile permission checks
  */
-class AdminPermissionsTest {
+class AdminServicePermissionsTest {
 
     private fun user(deviceId: String, vararg roles: Role): User {
         return User(deviceId = deviceId, roles = roles.toMutableList())
