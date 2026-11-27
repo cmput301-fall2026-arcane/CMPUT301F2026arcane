@@ -105,15 +105,21 @@ class CampsiteRepository (db: FirebaseFirestore = FirebaseFirestore.getInstance(
     }
 
     /**
+     * Makes a new campsite id without saving anything, so the photo can be uploaded under it first
+     */
+    fun newCampsiteId(): String = campsitesRef.document().id
+
+    /**
      * Saves to Firestore as a new campsite owned by the owner id.
      * The id and creation time are filled in
      *
      * @param ownerId device id of the owner registering the campsite
      * @param draft the campsite details entered on the register screen
+     * @param id id to save the campsite under, a new one is made if empty
      * @param onResult called with true if the save succeeded and false if it failed
      */
-    fun registerCampsite(ownerId: String, draft: Campsite, onResult: (Boolean) -> Unit) {
-        val doc = campsitesRef.document()
+    fun registerCampsite(ownerId: String, draft: Campsite, id: String = "", onResult: (Boolean) -> Unit) {
+        val doc = if (id.isEmpty()) campsitesRef.document() else campsitesRef.document(id)
         val campsite = draft.copy(
             id = doc.id,
             ownerId = ownerId,
