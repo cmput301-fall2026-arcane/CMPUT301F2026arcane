@@ -41,6 +41,7 @@ import com.example.code.logged_in_device
 import com.example.code.logged_in_email
 import com.example.code.logged_in_name
 import com.example.code.logged_in_phone
+import com.example.code.repositories.ReviewRepository
 import com.example.code.ui.navigation.BottomNavBar
 import com.example.code.ui.theme.DarkGreen
 import com.example.code.ui.theme.MossGreen
@@ -345,6 +346,8 @@ fun handleEditDetails(name: String, email: String, phone: String,
             onDone(1)
             return@updateUser
         } else {
+            if (name != logged_in_name) ReviewRepository().updateReviewerName(deviceID, name)
+            logged_in_name = name
             logged_in_name = name
             logged_in_device = deviceID
             logged_in_email = email

@@ -85,7 +85,7 @@ fun AdminCampsiteListScreen(mainNav: NavController, repo: CampsiteRepository) {
             items(repo.liveCampsites, key = {it.id}) { item ->
                 ACampsiteCard (
                     item = item,
-                    onClick = {},
+                    onClick = { mainNav.navigate("adminReviews/${item.id}") },
                     onDelete = { toDelete = item }
                 )
             }

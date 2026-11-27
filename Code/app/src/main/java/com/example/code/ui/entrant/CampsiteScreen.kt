@@ -59,10 +59,12 @@ import com.example.code.services.EntrantLotteries
 import com.example.code.services.currentEntrant
 import com.example.code.services.joinMessage
 import com.example.code.services.leaveMessage
+import com.example.code.services.CampsiteReviews
 import com.example.code.ui.components.CampsiteDateRangeDialog
 import com.example.code.ui.navigation.BottomNavBar
 import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
+import com.example.code.ui.components.CampsiteReviewsSection
 
 /* US 01.01.05 As an entrant, I want to see details of a campsite
 US 01.01.06 As an entrant, I want to join an active lottery from the campsite details screen
@@ -93,6 +95,8 @@ fun CampsiteScreen(mainNav: NavController, campsiteId: String) {
     var busy by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
     var showLeaveConfirm by remember { mutableStateOf(false) }
+    var rating by remember { mutableStateOf(0) }
+    var reviewKey by remember { mutableStateOf(0) }
     var showReserveDates by remember { mutableStateOf(false) }
 
     // load the campsite once when the screen opens
@@ -102,6 +106,17 @@ fun CampsiteScreen(mainNav: NavController, campsiteId: String) {
             onDone = { campsite = it; loading = false },
             onError = { error = it.message ?: "Could not load the campsite"; loading = false }
         )
+    }
+
+    // load the average rating when the screen opens
+    LaunchedEffect(campsiteId, reviewKey) {
+        rating = try {
+            CampsiteReviews().ratingFor(campsiteId).stars
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            0
+        }
     }
 
     // load the lottery state when the screen opens and after every action
@@ -146,6 +161,7 @@ fun CampsiteScreen(mainNav: NavController, campsiteId: String) {
     Scaffold(
         containerColor = Color.Transparent, // let the background image show through
         bottomBar = { BottomNavBar(selected = "home", navCont = mainNav) }
+
     ) { innerPadding ->
         Box(
             modifier = Modifier.fillMaxSize().padding(innerPadding),
@@ -158,6 +174,8 @@ fun CampsiteScreen(mainNav: NavController, campsiteId: String) {
                 loaded == null -> Text("Campsite not found", color = Color.White)
                 else -> CampsiteDetailsCard(
                     campsite = loaded,
+                    rating = rating,
+                    reviews = { CampsiteReviewsSection(campsiteId) { reviewKey++ } },
                     lotteryLabel = status?.let {
                         lotteryButtonLabel(
                             it
@@ -248,6 +266,8 @@ fun CampsiteScreen(mainNav: NavController, campsiteId: String) {
  * @param lotteryMessage one line about the lottery shown above the buttons, or null
  * @param onBack called when the back button is tapped
  * @param onLotteryButton called when the lottery button is tapped
+ * @param rating whole stars to draw, 0 if nobody has rated
+ * @param reviews content drawn under the card, the reviews section, empty by default
  */
 @Composable
 internal fun CampsiteDetailsCard(
@@ -256,7 +276,9 @@ internal fun CampsiteDetailsCard(
     lotteryEnabled: Boolean,
     lotteryMessage: String?,
     onBack: () -> Unit,
-    onLotteryButton: () -> Unit
+    onLotteryButton: () -> Unit,
+    rating: Int = 0,
+    reviews: @Composable () -> Unit = {}
 ) {
     Column(
         modifier = Modifier
@@ -270,7 +292,7 @@ internal fun CampsiteDetailsCard(
                 .clip(RoundedCornerShape(20.dp))
                 .background(col.UnfocusedInputContainer)
         ) {
-            Header(campsite)
+            Header(campsite, rating)
 
             Image(
                 painter = campsiteImage(campsite),
@@ -356,6 +378,7 @@ internal fun CampsiteDetailsCard(
                 }
             }
         }
+        reviews()
     }
 }
 
@@ -363,7 +386,7 @@ internal fun CampsiteDetailsCard(
  * Owner avatar, campsite name and star rating along the top of the card
  */
 @Composable
-private fun Header(campsite: Campsite) {
+private fun Header(campsite: Campsite, rating: Int) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -394,8 +417,7 @@ private fun Header(campsite: Campsite) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 // TODO: show the owner's @name once it can be loaded from the users collection
                 Spacer(modifier = Modifier.weight(1f))
-                // TODO: real rating once campsites have reviews
-                StarRating(rating = 0)
+                StarRating(rating = rating)
             }
         }
     }
@@ -407,7 +429,7 @@ private fun Header(campsite: Campsite) {
  * @param rating number of filled stars, 0 to 5
  */
 @Composable
-private fun StarRating(rating: Int) {
+internal fun StarRating(rating: Int) {
     val stars = (1..5).joinToString("") { if (it <= rating) "★" else "☆" }
     Text(stars, color = col.CardText, fontSize = 16.sp)
 }

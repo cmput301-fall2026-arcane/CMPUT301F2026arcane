@@ -52,6 +52,10 @@ import com.example.code.ui.navigation.BottomNavBar
 import com.example.code.rules.CampsiteFilters
 import com.example.code.rules.filterCampsites
 import com.example.code.rules.filterSummary
+import androidx.compose.runtime.LaunchedEffect
+import com.example.code.services.CampsiteReviews
+import com.example.code.services.RatingSummary
+import kotlin.coroutines.cancellation.CancellationException
 
 //private val sampleCampsites = listOf(
 //    CampsiteListItem(Campsite(id = "sample1", name = "Banff-ish Park", location = "Banff"), true),
@@ -62,7 +66,8 @@ import com.example.code.rules.filterSummary
 //)
 data class CampsiteListItem(
     val campsite: Campsite,
-    val lotteryOpen: Boolean = true
+    val lotteryOpen: Boolean = true,
+    val rating: Int = 0
 )
 
 
@@ -79,10 +84,21 @@ fun UserCampsiteListScreen(mainNav: NavController) {
         onDispose { sites.stopListening() }
     }
 
+    var ratings by remember { mutableStateOf<Map<String, RatingSummary>>(emptyMap()) }
+    LaunchedEffect(Unit) {
+        ratings = try {
+            CampsiteReviews().ratingsByCampsite()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            emptyMap()
+        }
+    }
+
     // TODO: load from CampsiteRepository instead of the sample list
     val shown =
         filterCampsites(sites.liveCampsites.map {
-            CampsiteListItem(it)
+            CampsiteListItem(it, rating = ratings[it.id]?.stars ?: 0)
         }, search, filters)
 
     Scaffold(
@@ -210,14 +226,16 @@ fun CampsiteCard(item: CampsiteListItem, onClick: () -> Unit) {
             .clickable(onClick = onClick),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = item.campsite.name,
-            color = col.CardText,
-            fontSize = 15.sp,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f).padding(start = 16.dp, end = 8.dp)
-        )
+        Column(modifier = Modifier.weight(1f).padding(start = 16.dp, end = 8.dp)) {
+            Text(
+                text = item.campsite.name,
+                color = col.CardText,
+                fontSize = 15.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            StarRating(item.rating)
+        }
         Box(modifier = Modifier.weight(0.9f).fillMaxHeight()) {
             Image(
                 painter = painterResource(R.drawable.backgroundimg),

@@ -30,6 +30,7 @@ import com.example.code.ui.start.StartScreens
 import com.example.code.ui.entrant.UserCampsiteListScreen
 import com.example.code.sites
 import com.example.code.users
+import com.example.code.ui.admin.AdminReviewsScreen
 
 @Composable
 fun ArcaneApp() {
@@ -71,6 +72,9 @@ fun ArcaneApp() {
         }
         composable("ownerWaitlist/{campsiteId}") { entry ->
             OwnerWaitlistScreen(mainNavCon, entry.arguments?.getString("campsiteId") ?: "")
+        }
+        composable("adminReviews/{campsiteId}") { entry ->
+            AdminReviewsScreen(mainNavCon, entry.arguments?.getString("campsiteId") ?: "")
         }
     }
 }
