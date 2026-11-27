@@ -2,6 +2,7 @@ package com.example.code.ui.entrant
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -63,6 +64,7 @@ import com.example.code.ui.components.CampsiteDateRangeDialog
 import com.example.code.ui.navigation.BottomNavBar
 import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
+import com.example.code.ui.components.ReserveDatesDialog
 
 /* US 01.01.05 As an entrant, I want to see details of a campsite
 US 01.01.06 As an entrant, I want to join an active lottery from the campsite details screen
@@ -209,24 +211,23 @@ fun CampsiteScreen(mainNav: NavController, campsiteId: String) {
     }
 
     if (showReserveDates) {
-        CampsiteDateRangeDialog(
-            startDate = null,
-            endDate = null,
+        ReserveDatesDialog(
+            campsiteId = campsiteId,
             onConfirm = { start, end ->
                 showReserveDates = false
                 val lottery = state?.lottery
                 val site = campsite
-                if (lottery != null && site != null && start != null) {
+                if (lottery != null && site != null) {
                     scope.launch {
                         busy = true
                         try {
                             val reservation = entrantLotteries.reserve(
-                                currentEntrant(), lottery, site, start, end ?: start
+                                currentEntrant(), lottery, site, start, end
                             )
                             mainNav.navigate("reservation/${reservation.id}")
-                        } catch (e: CancellationException) {
+                        } catch (e: CancellationException){
                             throw e
-                        } catch (e: Exception) {
+                        } catch (e: Exception){
                             message = e.message ?: "Could not make the reservation"
                         }
                         busy = false

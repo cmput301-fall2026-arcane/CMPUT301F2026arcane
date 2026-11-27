@@ -18,6 +18,7 @@ import com.example.code.rules.pickLotteryForCampsite
 import com.example.code.rules.reservationId
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
+import com.example.code.rules.canReserveNow
 
 /* US 01.01.06 As an entrant, I want to join an active lottery from the campsite details screen
 US 01.02.01 As an entrant, I want to join the waiting list for a campsite lottery
@@ -154,8 +155,12 @@ class EntrantLotteries(
         campsite: Campsite,
         startDate: Long,
         endDate: Long
-    ): Reservation = reservations.reserve(entrant, lottery.id, campsite, startDate, endDate)
-
+    ): Reservation {
+        check(canReserveNow(System.currentTimeMillis(), lottery)){
+            "The booking period for this lottery isn't open"
+        }
+        return reservations.reserve(entrant, lottery.id, campsite, startDate, endDate)
+    }
     private suspend fun drawIfDue(lottery: Lottery, now: Long) {
         if (isDrawDue(now, lottery.closeDate, lottery.isDrawn)) {
             // LotteryDraw checks again in Firestore, so two phones drawing at once is safe
